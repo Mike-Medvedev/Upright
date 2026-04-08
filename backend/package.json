@@ -4,16 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "npx tsx --watch main.ts",
-    "build": "esbuild main.ts --bundle --platform=node"
+    "dev": "npx tsx --watch src/main.ts",
+    "build": "esbuild src/main.ts --bundle --platform=node --format=esm  --packages=external --outfile=dist/main.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "cors": "^2.8.6",
     "express": "^5.2.1",
+    "helmet": "^8.1.0",
     "meebo": "^0.7.0",
     "zod": "^4.3.6"
   },

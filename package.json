@@ -17,8 +17,5 @@
   "bugs": {
     "url": "https://github.com/Mike-Medvedev/Upright/issues"
   },
-  "homepage": "https://github.com/Mike-Medvedev/Upright#readme",
-  "dependencies": {
-    "express": "^5.2.1"
-  }
+  "homepage": "https://github.com/Mike-Medvedev/Upright#readme"
 }

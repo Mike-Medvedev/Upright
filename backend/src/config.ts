@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EnvValidationError } from "./errors.js";
+import { EnvValidationError } from "@/errors";
 const configSchema = z.object({
   ROBOFLOW_API_KEY: z.string().min(1),
   PORT: z.string().min(1),
