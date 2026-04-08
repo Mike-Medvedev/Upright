@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "concurrently 'echo -e \"ROBOFLOW_API_KEY=<REPLACE-WITH-YOUR-KEY>\\nPORT=3000\" > .env' 'cd frontend && npm run dev' 'cd backend && npm run dev'"
   },
   "repository": {
     "type": "git",
@@ -17,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/Mike-Medvedev/Upright/issues"
   },
-  "homepage": "https://github.com/Mike-Medvedev/Upright#readme"
+  "homepage": "https://github.com/Mike-Medvedev/Upright#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }
