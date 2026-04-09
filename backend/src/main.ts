@@ -5,6 +5,7 @@ import config from "@/config";
 import { z } from "zod";
 import cors from "cors";
 import helmet from "helmet";
+import { WebSocketServer } from "ws";
 
 import { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate, IceCandidate } from "werift";
 
@@ -69,41 +70,6 @@ router.get(
 //     await pc.addIceCandidate(candidate);
 //   }
 // }
-const pc = new RTCPeerConnection({
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-});
-pc.onIceCandidate.subscribe((candidate) => {
-  if (!candidate) {
-    console.log("node ICE gathering complete");
-    return;
-  }
-  console.log("SEND NODE CANDIDATE TO BROWSER:", JSON.stringify(candidate));
-});
-pc.onDataChannel.subscribe((channel) => {
-  console.log("data channel:", channel.label);
-
-  channel.onMessage.subscribe((msg) => {
-    console.log("from browser:", msg.toString());
-    channel.send("hello from node");
-  });
-});
-app.post("/wrtc", async (req, res) => {
-  const { candidate, offer } = req.body;
-  if (offer) {
-    await pc.setRemoteDescription(new RTCSessionDescription(offer.sdp, "offer"));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    return res.json({ answer });
-  }
-  if (candidate) {
-    const rtcCandidate = new RTCIceCandidate(candidate);
-    await pc.addIceCandidate(rtcCandidate);
-    return res.json({ ok: true });
-  } else {
-    return res.json({ response: "There was no candidate or offer found" });
-  }
-});
-
 app.use("/api/v1", router);
 app.use(swagger());
 
@@ -111,6 +77,58 @@ const server = app.listen(config.PORT, () => {
   console.log(`Server listening on port ${config.PORT}`);
 });
 
+const wss = new WebSocketServer({ server });
+wss.on("listening", () => console.log("Websocket listening..."));
+wss.on("connection", (ws, req) => {
+  console.log("WebSocket connected", req.url);
+
+  const pc = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  });
+
+  pc.onIceCandidate.subscribe((candidate) => {
+    if (!candidate) return;
+    ws.send(JSON.stringify({ candidate }));
+  });
+
+  pc.onDataChannel.subscribe((channel) => {
+    channel.onMessage.subscribe((msg) => {
+      console.log("from browser:", msg.toString());
+      channel.send("hello from node");
+    });
+  });
+
+  ws.on("message", async (message) => {
+    let data: any;
+
+    try {
+      data = JSON.parse(message.toString());
+    } catch {
+      return;
+    }
+
+    try {
+      switch (data.type) {
+        case "offer": {
+          await pc.setRemoteDescription(data.offer);
+
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+
+          ws.send(JSON.stringify({ answer }));
+          break;
+        }
+
+        case "candidate": {
+          await pc.addIceCandidate(data.candidate);
+          break;
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+});
 function shutdown(signal?: string) {
   console.log(`Gracefully shutting down due to ${signal}`);
 

@@ -1,5 +1,6 @@
 import "./App.css";
 import { useEffect, useRef } from "react";
+import { ws } from "@/websocket";
 // import { connectors, webrtc, streams } from "@roboflow/inference-sdk";
 
 // // ⚠️ Use withApiKey for development only
@@ -58,36 +59,15 @@ export default function App() {
       rtcConnection.onicecandidate = async (event) => {
         console.log(event);
         if (!event.candidate) return;
-        const result = await fetch("/api/wrtc", {
-          method: "POST",
-          body: JSON.stringify({ candidate: event.candidate }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (!result.ok) {
-          console.error("Error sending ICE candidate", result.status);
-          throw new Error("Cant send ICE candidate");
-        }
+        ws.send(JSON.stringify({ candidate: event.candidate }));
       };
 
       rtcConnection.onnegotiationneeded = async () => {
         const offer = await rtcConnection.createOffer();
         await rtcConnection.setLocalDescription(offer);
-        const result = await fetch("/api/wrtc", {
-          method: "POST",
-          body: JSON.stringify({ offer }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (!result.ok) {
-          console.error("Error sending wrtc offer", result.status);
-          throw new Error("Cant connect to wrtc signal");
-        } else {
-          const { answer } = await result.json();
-          await rtcConnection.setRemoteDescription(answer);
-        }
+        ws.send(JSON.stringify({ offer }));
+        const { answer } = await result.json();
+        await rtcConnection.setRemoteDescription(answer);
       };
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -99,7 +79,8 @@ export default function App() {
   return (
     <div className="app-container">
       <main className="main-container">
-        <video autoPlay ref={videoRef} width={500} height={500}></video>
+        <button style={{ padding: "1rem" }}></button>
+        {/* { <video autoPlay ref={videoRef} width={500} height={500}></video>} */}
       </main>
     </div>
   );
