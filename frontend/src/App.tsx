@@ -42,10 +42,21 @@ import { ws } from "@/websocket";
 
 export default function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const iceCandidateQueue = useRef<RTCIceCandidateInit[]>([]);
+  const isRTCOfferAnswered = useRef<boolean>(false);
+
   useEffect(() => {
     (async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
+      console.log("PRINTING TRACKS", stream.getTracks());
+      videoRef.current.srcObject = stream;
       const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
       const rtcConnection = new RTCPeerConnection(config);
+      for (const track of stream.getTracks()) {
+        rtcConnection.addTrack(track, stream);
+      }
       const channel = rtcConnection.createDataChannel("chat");
 
       channel.onopen = () => {
@@ -57,30 +68,41 @@ export default function App() {
         console.log("message from backend:", event.data);
       };
       rtcConnection.onicecandidate = async (event) => {
-        console.log(event);
+        console.log(" GATHERED AND SENDING ICE CANDIDATE");
         if (!event.candidate) return;
         ws.send(JSON.stringify({ candidate: event.candidate }));
       };
 
-      rtcConnection.onnegotiationneeded = async () => {
+      rtcConnection.onnegotiationneeded = async (event) => {
+        console.log("PRINTING EVENT OF NEGOTATION", event);
         const offer = await rtcConnection.createOffer();
         await rtcConnection.setLocalDescription(offer);
         ws.send(JSON.stringify({ offer }));
-        const { answer } = await result.json();
-        await rtcConnection.setRemoteDescription(answer);
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-      });
-      videoRef.current.srcObject = stream;
+      ws.onmessage = async (data) => {
+        console.log("RECIEVED WEBSOCKET MESSAGE", data);
+        const message = JSON.parse(data.data);
+        console.log("RAW MESSAGE", message);
+
+        if ("answer" in message) {
+          await rtcConnection.setRemoteDescription(message.answer);
+          isRTCOfferAnswered.current = true;
+          iceCandidateQueue.current.forEach((candidate) =>
+            rtcConnection.addIceCandidate(candidate),
+          );
+        } else if ("candidate" in message) {
+          if (isRTCOfferAnswered.current) await rtcConnection.addIceCandidate(message.candidate);
+          else iceCandidateQueue.current.push(message.candidate);
+        } else console.log("recieved unknown message");
+      };
     })();
   });
   return (
     <div className="app-container">
       <main className="main-container">
         <button style={{ padding: "1rem" }}></button>
-        {/* { <video autoPlay ref={videoRef} width={500} height={500}></video>} */}
+        {<video autoPlay ref={videoRef} width={500} height={500}></video>}
       </main>
     </div>
   );

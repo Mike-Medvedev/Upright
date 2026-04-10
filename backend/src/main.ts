@@ -86,6 +86,16 @@ wss.on("connection", (ws, req) => {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   });
 
+  pc.onconnectionstatechange = () => {
+    console.log(pc.connectionState);
+  };
+
+  pc.onTrack.subscribe((track) => {
+    console.log("PRINTING OUT TRACK", track);
+    track.onReceiveRtp.subscribe((packet) => console.log(packet));
+    // track.onReceiveRtcp.subscribe((rtcp) => console.log(rtcp));
+  });
+
   pc.onIceCandidate.subscribe((candidate) => {
     if (!candidate) return;
     ws.send(JSON.stringify({ candidate }));
@@ -93,8 +103,7 @@ wss.on("connection", (ws, req) => {
 
   pc.onDataChannel.subscribe((channel) => {
     channel.onMessage.subscribe((msg) => {
-      console.log("from browser:", msg.toString());
-      channel.send("hello from node");
+      console.log("Video Frames", msg.toString());
     });
   });
 
@@ -106,27 +115,17 @@ wss.on("connection", (ws, req) => {
     } catch {
       return;
     }
+    console.log(data);
+    if ("offer" in data) {
+      await pc.setRemoteDescription(data.offer);
 
-    try {
-      switch (data.type) {
-        case "offer": {
-          await pc.setRemoteDescription(data.offer);
-
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-
-          ws.send(JSON.stringify({ answer }));
-          break;
-        }
-
-        case "candidate": {
-          await pc.addIceCandidate(data.candidate);
-          break;
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      console.log(answer);
+      ws.send(JSON.stringify({ answer }));
+    } else if ("candidate" in data) {
+      await pc.addIceCandidate(data.candidate);
+    } else console.log("NO OFFER OR CANDIDATE IN MESSAGE: ", data);
   });
 });
 function shutdown(signal?: string) {
