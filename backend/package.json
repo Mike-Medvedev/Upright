@@ -15,6 +15,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@roboflow/inference-sdk": "^0.3.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/ws": "^8.18.1",
@@ -22,13 +23,12 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "meebo": "^0.7.0",
-    "werift": "^0.22.9",
-    "ws": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
     "dotenv": "^17.4.1",
-    "esbuild": "0.28.0"
+    "esbuild": "0.28.0",
+    "tsx": "^4.21.0"
   }
 }
