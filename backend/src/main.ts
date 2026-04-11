@@ -18,6 +18,10 @@ app.use(helmet());
 
 const router = TypedRouter(express.Router(), { basePath: "/api/v1" });
 
+app.get("/health", (_, res) => {
+  res.json({ status: "healthy" });
+});
+
 router.get(
   "/",
   {

@@ -5,13 +5,14 @@ import { heyApiPlugin } from "@hey-api/vite-plugin";
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
+  const BASE_URL = env.VITE_API_URL;
   return {
     plugins: [
       react(),
       heyApiPlugin({
         config: {
-          input: `${env.VITE_API_URL}/docs/openapi.json`,
-          output: "src/client",
+          input: `${BASE_URL}/docs/openapi.json`,
+          output: "src/generated",
           plugins: [
             "@hey-api/typescript",
             {
@@ -32,12 +33,12 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         "/api": {
-          target: "http://localhost:3000",
+          target: BASE_URL,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ""),
         },
         "/ws": {
-          target: "ws://localhost:3000",
+          target: BASE_URL.replace(/http/, "ws"),
           changeOrigin: true,
           ws: true,
         },
