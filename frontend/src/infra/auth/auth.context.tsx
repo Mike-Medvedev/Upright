@@ -1,34 +1,31 @@
 import { createContext, useContext } from "react";
-import { supabase } from "@/infra/auth/auth.client";
+import type {
+  SignInWithPasswordCredentials,
+  SignInWithOAuthCredentials,
+  SignUpWithPasswordCredentials,
+  Provider,
+} from "@supabase/supabase-js";
 
-interface AuthContext {
-  login: () => void;
+type AllowedProvider = Extract<Provider, "google" | "github">;
+
+type MyOAuthCredentials = Omit<SignInWithOAuthCredentials, "provider"> & {
+  provider: AllowedProvider;
+};
+
+type LoginParams =
+  | { type: "email"; credentials: SignInWithPasswordCredentials }
+  | { type: "oauth"; credentials: MyOAuthCredentials };
+
+export interface AuthContextValue {
+  login: (params: LoginParams) => void;
   logout: () => void;
+  createUser: (credentials: SignUpWithPasswordCredentials) => void;
 }
 
-type SignInType = "password" | "email" | "oauth" | "otp";
-
-const AuthContext = createContext<AuthContext | null>(null);
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function useAuth() {
-  if (!AuthContext) throw new Error("Auth context must be used within Auth Provider");
-  return AuthContext;
-}
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const value = {
-    login: (type: SignInType) => {
-      switch (type) {
-        case "email":
-          break;
-        case "password":
-          break;
-        case "oauth":
-          break;
-        case "otp":
-          break;
-      }
-    },
-  };
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("Auth context must be used within Auth Provider");
+  return context;
 }
