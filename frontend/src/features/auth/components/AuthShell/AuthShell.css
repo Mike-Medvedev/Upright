@@ -1,9 +1,9 @@
 .authShell {
   background:
-    radial-gradient(circle at top left, rgba(139, 92, 246, 0.28), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(76, 29, 149, 0.22), transparent 30%),
-    linear-gradient(180deg, #040308 0%, #0b0813 100%);
-  color: #f7f4ff;
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.02), transparent 34%),
+    linear-gradient(180deg, #0c0c0e 0%, #141416 100%);
+  color: #e4e4e7;
   min-height: 100vh;
   padding: 24px;
 }
@@ -19,10 +19,10 @@
 
 .authShellCard {
   backdrop-filter: blur(18px);
-  background: rgba(14, 12, 22, 0.84);
-  border: 1px solid rgba(145, 91, 255, 0.2);
+  background: rgba(22, 22, 24, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 28px;
-  box-shadow: 0 24px 80px rgba(6, 5, 9, 0.5);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -45,12 +45,13 @@
 }
 
 .authShellProductName {
+  color: #fafafa;
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 
 .authShellFooter {
-  color: #9f8acb;
+  color: #8b8b93;
   font-size: 0.95rem;
   margin-top: 24px;
 }

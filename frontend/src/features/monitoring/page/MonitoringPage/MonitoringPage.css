@@ -4,8 +4,8 @@
 
 .monitoringCalibration {
   backdrop-filter: blur(12px);
-  background: rgba(14, 12, 22, 0.72);
-  border: 1px solid rgba(145, 91, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--mantine-radius-lg);
   padding: var(--mantine-spacing-md);
 }
@@ -13,8 +13,8 @@
 .monitoringCameraPlaceholder {
   align-items: center;
   aspect-ratio: 16 / 9;
-  background: rgba(6, 5, 12, 0.85);
-  border: 2px dashed rgba(145, 91, 255, 0.28);
+  background: rgba(0, 0, 0, 0.28);
+  border: 2px dashed rgba(255, 255, 255, 0.12);
   border-radius: var(--mantine-radius-lg);
   display: flex;
   justify-content: center;

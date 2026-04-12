@@ -85,7 +85,7 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      description="Use email and password or continue with a trusted OAuth provider."
+      description="Sign in with email and password, or with Google or GitHub."
       footer={
         <Text>
           Don&apos;t have an account?{" "}

@@ -17,8 +17,8 @@ body,
 }
 
 body {
-  background: #040308;
-  color: #f7f4ff;
+  background: linear-gradient(180deg, #0c0c0e 0%, #141416 100%);
+  color: #e4e4e7;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 

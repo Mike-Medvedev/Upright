@@ -1,28 +1,27 @@
 import { AppShell, Avatar, Box, Group, Loader, Menu, NavLink, Stack, Text, Title } from "@mantine/core";
+import { IconChartBar, IconVideo } from "@tabler/icons-react";
 import { useState } from "react";
 import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/infra/auth/auth.context";
 import { AppLogo } from "@/theme/components/AppLogo/AppLogo";
 import "./AppLayout.css";
 
-function getInitials(email: string | undefined): string {
+function getAvatarLetter(email: string | undefined): string {
   if (!email) {
     return "?";
   }
 
-  const local = email.split("@")[0] ?? "";
-  const parts = local.split(/[._-]/u).filter(Boolean);
+  const local = email.split("@")[0]?.trim() ?? "";
+  const first = local[0];
 
-  if (parts.length >= 2) {
-    const a = parts[0]?.[0];
-    const b = parts[1]?.[0];
-    if (a && b) {
-      return `${a}${b}`.toUpperCase();
-    }
-  }
-
-  return local.slice(0, 2).toUpperCase() || "?";
+  return first ? first.toUpperCase() : "?";
 }
+
+const navLinkClassNames = {
+  label: "appLayoutNavLinkLabel",
+  root: "appLayoutNavLink",
+  section: "appLayoutNavLinkSection",
+} as const;
 
 export function AppLayout() {
   const { logout, user } = useAuth();
@@ -31,7 +30,7 @@ export function AppLayout() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const email = user?.email ?? "";
-  const initials = getInitials(email);
+  const avatarLetter = getAvatarLetter(email);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -71,8 +70,16 @@ export function AppLayout() {
                 {isLoggingOut ? (
                   <Loader color="grape" size="sm" />
                 ) : (
-                  <Avatar color="grape" radius="xl" size="md">
-                    {initials}
+                  <Avatar
+                    classNames={{
+                      placeholder: "appLayoutAvatarPlaceholder",
+                      root: "appLayoutAvatarRoot",
+                    }}
+                    color="grape"
+                    radius="xl"
+                    size={32}
+                  >
+                    {avatarLetter}
                   </Avatar>
                 )}
               </button>
@@ -97,20 +104,26 @@ export function AppLayout() {
       </AppShell.Header>
 
       <AppShell.Navbar className="appLayoutNavbar" p="md">
-        <Stack gap={4}>
+        <Stack gap={6}>
           <NavLink
             active={location.pathname === "/monitoring"}
-            className="appLayoutNavLink"
+            classNames={navLinkClassNames}
+            color="grape"
             component={RouterNavLink}
             label="Monitoring"
+            leftSection={<IconVideo className="appLayoutNavIcon" size={18} stroke={1.5} />}
             to="/monitoring"
+            variant="subtle"
           />
           <NavLink
             active={location.pathname === "/analytics"}
-            className="appLayoutNavLink"
+            classNames={navLinkClassNames}
+            color="grape"
             component={RouterNavLink}
             label="Analytics"
+            leftSection={<IconChartBar className="appLayoutNavIcon" size={18} stroke={1.5} />}
             to="/analytics"
+            variant="subtle"
           />
         </Stack>
       </AppShell.Navbar>

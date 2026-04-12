@@ -1,7 +1,7 @@
 import { Button, Paper, TextInput, PasswordInput, createTheme } from "@mantine/core";
 
 const theme = createTheme({
-  black: "#050409",
+  black: "#0c0c0e",
   colors: {
     grape: [
       "#f4ebff",
@@ -21,6 +21,36 @@ const theme = createTheme({
       defaultProps: {
         color: "grape",
         radius: "md",
+      },
+      styles: (theme, { variant, color }) => {
+        const grapeFilled = variant === "filled" && (color === "grape" || color === undefined);
+
+        if (grapeFilled) {
+          return {
+            root: {
+              "&::before": {
+                backgroundColor: "rgba(255, 255, 255, 0.12)",
+              },
+              "&:hover:not(:disabled):not([data-disabled])": {
+                backgroundColor: theme.colors.grape[4],
+              },
+            },
+          };
+        }
+
+        if (variant === "default") {
+          return {
+            root: {
+              "&:hover:not(:disabled):not([data-disabled])": {
+                backgroundColor: "rgba(255, 255, 255, 0.08)",
+                borderColor: "rgba(255, 255, 255, 0.14)",
+                color: "#f4f4f5",
+              },
+            },
+          };
+        }
+
+        return {};
       },
     }),
     Paper: Paper.extend({
