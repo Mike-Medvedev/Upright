@@ -31,7 +31,7 @@ const theme = createTheme({
               "&::before": {
                 backgroundColor: "rgba(255, 255, 255, 0.12)",
               },
-              "&:hover:not(:disabled):not([data-disabled])": {
+              "&:hover:not(:disabled):not([dataDisabled])": {
                 backgroundColor: theme.colors.grape[4],
               },
             },
@@ -41,7 +41,7 @@ const theme = createTheme({
         if (variant === "default") {
           return {
             root: {
-              "&:hover:not(:disabled):not([data-disabled])": {
+              "&:hover:not(:disabled):not([dataDisabled])": {
                 backgroundColor: "rgba(255, 255, 255, 0.08)",
                 borderColor: "rgba(255, 255, 255, 0.14)",
                 color: "#f4f4f5",

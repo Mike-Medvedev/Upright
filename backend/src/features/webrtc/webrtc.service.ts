@@ -27,7 +27,7 @@ export async function initializeWebrtcSession(body: {
       workflowsParameters: wrtcParams.workflowsParameters,
       requestedPlan: wrtcParams.requestedPlan,
       requestedRegion: wrtcParams.requestedRegion,
-      // realtimeProcessing: wrtcParams.realtimeProcessing,
+      realtimeProcessing: wrtcParams.realtimeProcessing ?? true,
       processingTimeout: wrtcParams.processingTimeout,
     },
   });

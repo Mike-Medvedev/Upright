@@ -5,6 +5,9 @@ const DEFAULT_WORKFLOWS_PARAMETERS: Record<string, unknown> = {
   is_calibrating: false,
   baseline_height: 100,
   threshold_ratio: 0.8,
+  /** Cloud pipeline: drop backlog instead of slow-motion lag; process eagerly. */
+  source_buffer_filling_strategy: "DROP_OLDEST",
+  source_buffer_consumption_strategy: "EAGER",
 };
 
 /** Shared constraints for local preview and Roboflow ingest (no WebRTC until inference starts). */
@@ -94,6 +97,8 @@ export async function initWebRtcStream(
       processingTimeout: 3600,
       requestedPlan: "webrtc-gpu-medium",
       requestedRegion: "us",
+      /** Drop frames when behind instead of stuttering / “slow motion”. */
+      realtimeProcessing: true,
       workflowsParameters,
     },
     onData: options.onData ?? ((data) => console.log("Predictions:", data)),
