@@ -1,5 +1,4 @@
 import { createBrowserRouter, Outlet } from "react-router";
-import App from "@/App";
 import ProtectedRoute from "@/protected-routes";
 import LoginScreen from "./features/Login/screens/LoginScreen";
 
