@@ -9,7 +9,6 @@ export async function initializeWebrtcSession(body: {
   offer: unknown;
   wrtcParams: Record<string, unknown>;
 }) {
-  console.log("GOT REQUEST");
   const { offer, wrtcParams } = body;
 
   // API key stays secure on the server
@@ -27,7 +26,6 @@ export async function initializeWebrtcSession(body: {
       workflowsParameters: wrtcParams.workflowsParameters,
       requestedPlan: wrtcParams.requestedPlan,
       requestedRegion: wrtcParams.requestedRegion,
-      realtimeProcessing: wrtcParams.realtimeProcessing ?? true,
       processingTimeout: wrtcParams.processingTimeout,
     },
   });
