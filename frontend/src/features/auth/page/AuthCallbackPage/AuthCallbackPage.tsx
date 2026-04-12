@@ -10,7 +10,7 @@ export function AuthCallbackPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      navigate("/home", { replace: true });
+      navigate("/monitoring", { replace: true });
     }
 
     if (status === "unauthenticated") {

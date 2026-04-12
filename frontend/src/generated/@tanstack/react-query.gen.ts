@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { getApiV1, type Options } from '../sdk.gen';
-import type { GetApiV1Data, GetApiV1Response } from '../types.gen';
+import { getHello, type Options } from '../sdk.gen';
+import type { GetHelloData, GetHelloResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -39,14 +39,14 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
     return [params];
 };
 
-export const getApiV1QueryKey = (options?: Options<GetApiV1Data>) => createQueryKey('getApiV1', options);
+export const getHelloQueryKey = (options?: Options<GetHelloData>) => createQueryKey('getHello', options);
 
 /**
  * Hello World
  */
-export const getApiV1Options = (options?: Options<GetApiV1Data>) => queryOptions<GetApiV1Response, DefaultError, GetApiV1Response, ReturnType<typeof getApiV1QueryKey>>({
+export const getHelloOptions = (options?: Options<GetHelloData>) => queryOptions<GetHelloResponse, DefaultError, GetHelloResponse, ReturnType<typeof getHelloQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getApiV1({
+        const { data } = await getHello({
             ...options,
             ...queryKey[0],
             signal,
@@ -54,5 +54,5 @@ export const getApiV1Options = (options?: Options<GetApiV1Data>) => queryOptions
         });
         return data;
     },
-    queryKey: getApiV1QueryKey(options)
+    queryKey: getHelloQueryKey(options)
 });

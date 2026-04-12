@@ -1,9 +1,6 @@
 ---
-description: Enforce drizzle-zod schema generation for feature types that reference DB tables
-globs: src/features/**/*.types.ts
 alwaysApply: false
 ---
-
 # Drizzle Zod Schema Generation
 
 When a feature interacts with a database table, its `.types.ts` must derive Zod schemas from the Drizzle schema using `drizzle-zod` — never hand-write Zod schemas for DB columns.

@@ -60,7 +60,7 @@ export function LoginPage() {
         credentials: values,
         type: "email",
       });
-      navigate("/home", { replace: true });
+      navigate("/monitoring", { replace: true });
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {

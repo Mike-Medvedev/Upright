@@ -57,7 +57,7 @@ export function SignupPage() {
       const result = await createUser(values);
 
       if (result.status === "signed-in") {
-        navigate("/home", { replace: true });
+        navigate("/monitoring", { replace: true });
         return;
       }
 

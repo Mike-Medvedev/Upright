@@ -15,7 +15,7 @@ export function PublicOnlyRoute() {
   }
 
   if (status === "authenticated") {
-    return <Navigate replace to="/home" />;
+    return <Navigate replace to="/monitoring" />;
   }
 
   return <Outlet />;

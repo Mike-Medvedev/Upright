@@ -1,0 +1,54 @@
+.appLayoutRoot {
+  background:
+    radial-gradient(circle at top, rgba(139, 92, 246, 0.12), transparent 28%),
+    linear-gradient(180deg, #040308 0%, #0b0813 100%);
+  color: #f7f4ff;
+  min-height: 100vh;
+}
+
+.appLayoutHeader {
+  background: rgba(8, 7, 14, 0.92);
+  border-bottom: 1px solid rgba(145, 91, 255, 0.18);
+}
+
+.appLayoutHeaderInner {
+  height: 100%;
+  max-width: 100%;
+  padding-left: var(--mantine-spacing-md);
+  padding-right: var(--mantine-spacing-md);
+}
+
+.appLayoutTitle {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.appLayoutAvatarTrigger {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0;
+}
+
+.appLayoutAvatarTrigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.appLayoutNavbar {
+  background: rgba(10, 8, 16, 0.96);
+  border-right: 1px solid rgba(145, 91, 255, 0.14);
+}
+
+.appLayoutNavLink {
+  border-radius: var(--mantine-radius-md);
+}
+
+.appLayoutMain {
+  min-height: calc(100vh - 56px);
+}

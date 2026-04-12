@@ -4,14 +4,14 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:3000' | (string & {});
 };
 
-export type GetApiV1Data = {
+export type GetHelloData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/';
 };
 
-export type GetApiV1Responses = {
+export type GetHelloResponses = {
     /**
      * Success
      */
@@ -20,4 +20,4 @@ export type GetApiV1Responses = {
     };
 };
 
-export type GetApiV1Response = GetApiV1Responses[keyof GetApiV1Responses];
+export type GetHelloResponse = GetHelloResponses[keyof GetHelloResponses];

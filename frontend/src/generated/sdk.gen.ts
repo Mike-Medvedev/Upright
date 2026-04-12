@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetApiV1Data, GetApiV1Responses } from './types.gen';
-import { zGetApiV1Response } from './zod.gen';
+import type { GetHelloData, GetHelloResponses } from './types.gen';
+import { zGetHelloResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -24,13 +24,13 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 /**
  * Hello World
  */
-export const getApiV1 = <ThrowOnError extends boolean = false>(options?: Options<GetApiV1Data, ThrowOnError>) => (options?.client ?? client).get<GetApiV1Responses, unknown, ThrowOnError>({
+export const getHello = <ThrowOnError extends boolean = false>(options?: Options<GetHelloData, ThrowOnError>) => (options?.client ?? client).get<GetHelloResponses, unknown, ThrowOnError>({
     requestValidator: async (data) => await z.object({
         body: z.never().optional(),
         path: z.never().optional(),
         query: z.never().optional()
     }).parseAsync(data),
-    responseValidator: async (data) => await zGetApiV1Response.parseAsync(data),
+    responseValidator: async (data) => await zGetHelloResponse.parseAsync(data),
     url: '/api/v1/',
     ...options
 });

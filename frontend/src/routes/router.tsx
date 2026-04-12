@@ -2,11 +2,14 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AuthCallbackPage } from "@/features/auth/page/AuthCallbackPage/AuthCallbackPage";
 import { LoginPage } from "@/features/auth/page/LoginPage/LoginPage";
 import { SignupPage } from "@/features/auth/page/SignupPage/SignupPage";
-import { HomePage } from "@/features/dashboard/page/HomePage/HomePage";
+import { AnalyticsPage } from "@/features/analytics/page/AnalyticsPage/AnalyticsPage";
+import { MonitoringPage } from "@/features/monitoring/page/MonitoringPage/MonitoringPage";
+import { SettingsPage } from "@/features/settings/page/SettingsPage/SettingsPage";
 import { NotFoundPage } from "@/routes/NotFoundPage/NotFoundPage";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { PublicOnlyRoute } from "@/routes/PublicOnlyRoute";
 import { RouteErrorBoundary } from "@/routes/RouteErrorBoundary";
+import { AppLayout } from "@/theme/components/AppLayout/AppLayout";
 
 export const router = createBrowserRouter([
   {
@@ -36,8 +39,25 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           {
-            element: <HomePage />,
-            path: "/home",
+            element: <AppLayout />,
+            children: [
+              {
+                element: <MonitoringPage />,
+                path: "/monitoring",
+              },
+              {
+                element: <AnalyticsPage />,
+                path: "/analytics",
+              },
+              {
+                element: <SettingsPage />,
+                path: "/settings",
+              },
+              {
+                element: <Navigate replace to="/monitoring" />,
+                path: "/home",
+              },
+            ],
           },
         ],
       },

@@ -8,94 +8,49 @@
   padding: 24px;
 }
 
-.authShellGrid {
-  display: grid;
-  gap: 24px;
+.authShellCenter {
+  align-items: center;
+  display: flex;
+  justify-content: center;
   margin: 0 auto;
-  max-width: 1120px;
+  max-width: 520px;
   min-height: calc(100vh - 48px);
 }
 
-.authShellBrand,
 .authShellCard {
   backdrop-filter: blur(18px);
   background: rgba(14, 12, 22, 0.84);
   border: 1px solid rgba(145, 91, 255, 0.2);
   border-radius: 28px;
   box-shadow: 0 24px 80px rgba(6, 5, 9, 0.5);
-}
-
-.authShellBrand {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-  padding: 32px;
-  position: relative;
-}
-
-.authShellBrand::after {
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.45) 0%, rgba(139, 92, 246, 0) 62%);
-  content: "";
-  height: 320px;
-  pointer-events: none;
-  position: absolute;
-  right: -96px;
-  top: -64px;
-  width: 320px;
-}
-
-.authShellEyebrow {
-  color: #b28cff;
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  margin-bottom: 16px;
-  text-transform: uppercase;
-}
-
-.authShellFeatureList {
-  display: grid;
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-}
-
-.authShellFeatureItem {
-  align-items: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(145, 91, 255, 0.16);
-  border-radius: 16px;
-  display: flex;
-  gap: 12px;
-  padding: 14px 16px;
-}
-
-.authShellFeatureDot {
-  background: linear-gradient(180deg, #b28cff 0%, #7c3aed 100%);
-  border-radius: 999px;
-  flex: 0 0 10px;
-  height: 10px;
-  width: 10px;
-}
-
-.authShellCard {
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 32px;
+  width: 100%;
+}
+
+.authShellBrand {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 4px;
+  text-align: center;
+}
+
+.authShellBrand .appLogo {
+  height: 52px;
+  width: 52px;
+}
+
+.authShellProductName {
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .authShellFooter {
   color: #9f8acb;
   font-size: 0.95rem;
   margin-top: 24px;
-}
-
-@media (min-width: 900px) {
-  .authShellGrid {
-    align-items: stretch;
-    grid-template-columns: minmax(320px, 1fr) minmax(420px, 520px);
-  }
 }

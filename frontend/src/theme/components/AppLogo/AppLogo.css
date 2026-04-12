@@ -1,0 +1,7 @@
+.appLogo {
+  color: #b88cff;
+  display: block;
+  flex-shrink: 0;
+  height: 36px;
+  width: 36px;
+}

@@ -5,4 +5,4 @@ import * as z from 'zod';
 /**
  * Success
  */
-export const zGetApiV1Response = z.record(z.string(), z.unknown());
+export const zGetHelloResponse = z.record(z.string(), z.unknown());
