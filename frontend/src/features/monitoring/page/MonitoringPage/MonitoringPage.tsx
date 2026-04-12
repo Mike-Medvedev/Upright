@@ -1,18 +1,18 @@
-import { Container, Stack, Button, Paper } from "@mantine/core";
-import { useState, useRef, useEffect } from "react";
+import { Container, Stack, Paper, Button } from "@mantine/core";
+import { useRef, useEffect, useState } from "react";
 import useCamera from "@/features/monitoring/hooks/useCamera";
 function CameraPreview() {
   const { camera, isLoading, error } = useCamera();
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    if (videoRef.current && !isLoading && camera) {
+    if (videoRef.current && camera) {
       videoRef.current.srcObject = camera;
     }
-  }, [isLoading, camera]);
+  }, [camera]);
 
   if (isLoading) return <p>Loading...</p>;
-  if (error) return <p>Error loading Camera! Reason: {error.message}</p>;
+  if (error) return <p>Error: {error.message}</p>;
   return (
     <Paper w="100%" radius="md" p={0} style={{ aspectRatio: "16/9", overflow: "hidden" }}>
       <video
@@ -26,16 +26,12 @@ function CameraPreview() {
 }
 
 export function MonitoringPage() {
-  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
-
-  function handleRecordingStatus() {
-    setIsCameraActive((prev) => !prev);
-  }
+  const [isCameraActive, setIsCameraActive] = useState(false);
 
   return (
     <Container size="md">
       <Stack align="center" gap="md">
-        <Button onClick={handleRecordingStatus}>
+        <Button onClick={() => setIsCameraActive((prev) => !prev)}>
           {isCameraActive ? "Stop" : "Start"} Recording
         </Button>
         {isCameraActive && <CameraPreview />}
