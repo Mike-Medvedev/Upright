@@ -57,11 +57,20 @@
   width: 100%;
 }
 
+/* Remote Roboflow frames use contain so the full output fits (aspect may differ from the shell). */
 .monitoringVideo {
   display: block;
   height: 100%;
-  object-fit: cover;
+  inset: 0;
+  object-fit: contain;
+  object-position: center;
+  position: absolute;
   width: 100%;
+}
+
+/* Local-only preview: fill the frame like a typical webcam tile */
+.monitoringVideo_local {
+  object-fit: cover;
 }
 
 .monitoringVideoPlaceholder {
