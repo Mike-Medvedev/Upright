@@ -78,6 +78,7 @@ export function AppLayout() {
                     color="grape"
                     radius="xl"
                     size={32}
+                    variant="light"
                   >
                     {avatarLetter}
                   </Avatar>

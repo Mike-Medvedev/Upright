@@ -42,6 +42,9 @@
 }
 
 .appLayoutAvatarRoot {
+  /* Between Mantine’s dark “light” chip and the old near-white override */
+  --avatar-bg: var(--mantine-color-grape-3) !important;
+  --avatar-color: var(--mantine-color-grape-9) !important;
   border: 2px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
 }
@@ -90,22 +93,19 @@
   color: #d4d4d8 !important;
 }
 
-/* Active: brand (grape) — reserved for selection */
+/* Active: darker grape wash so light lavender text reads clearly */
 .appLayoutNavLink:is([data-active], [aria-current="page"]) {
-  background: rgba(124, 58, 237, 0.18);
+  background: rgba(76, 29, 149, 0.55);
 }
 
 .appLayoutNavLink:is([data-active], [aria-current="page"]):hover:not([data-disabled]) {
-  background: rgba(124, 58, 237, 0.26) !important;
+  background: rgba(88, 36, 168, 0.62) !important;
 }
 
 .appLayoutNavLink:is([data-active], [aria-current="page"]) .appLayoutNavLinkLabel,
-.appLayoutNavLink:is([data-active], [aria-current="page"]) .appLayoutNavLinkSection {
-  color: #f5f0ff;
-}
-
+.appLayoutNavLink:is([data-active], [aria-current="page"]) .appLayoutNavLinkSection,
 .appLayoutNavLink:is([data-active], [aria-current="page"]) .appLayoutNavIcon {
-  color: #d8b4ff;
+  color: var(--mantine-color-grape-0);
 }
 
 .appLayoutMain {

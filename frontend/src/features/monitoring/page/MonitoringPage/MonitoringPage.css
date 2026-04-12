@@ -1,23 +1,153 @@
 .monitoringPage {
-  max-width: 960px;
+  margin-inline: auto;
+  max-width: 1200px;
+  width: 100%;
 }
 
-.monitoringCalibration {
-  backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.04);
+.monitoringPreviewCard {
+  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--mantine-radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.monitoringPreviewCard_live {
+  border-color: rgba(180, 130, 220, 0.45);
+  box-shadow:
+    0 8px 36px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(160, 100, 200, 0.15);
+}
+
+.monitoringPreviewCard_paused {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+}
+
+.monitoringPreviewTopBar {
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-sm);
+  justify-content: space-between;
   padding: var(--mantine-spacing-md);
 }
 
-.monitoringCameraPlaceholder {
-  align-items: center;
+.monitoringPreviewTopTitle {
+  line-height: 1.35;
+}
+
+.monitoringVideoShell_idle .monitoringVideo {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.monitoringVideoShell {
   aspect-ratio: 16 / 9;
-  background: rgba(0, 0, 0, 0.28);
-  border: 2px dashed rgba(255, 255, 255, 0.12);
-  border-radius: var(--mantine-radius-lg);
-  display: flex;
-  justify-content: center;
-  max-width: 960px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 0;
+  flex-shrink: 0;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
   width: 100%;
+}
+
+.monitoringVideo {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.monitoringVideoPlaceholder {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  height: 100%;
+  inset: 0;
+  justify-content: center;
+  padding: var(--mantine-spacing-lg);
+  position: absolute;
+  width: 100%;
+}
+
+.monitoringVideoOverlay {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  inset: 0;
+  justify-content: center;
+  padding: var(--mantine-spacing-lg);
+  position: absolute;
+  text-align: center;
+  width: 100%;
+}
+
+.monitoringVideoOverlay_connecting {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.monitoringVideoOverlay_dim {
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.monitoringVideoOverlay_paused {
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.monitoringPreviewFooter {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: var(--mantine-spacing-md);
+}
+
+.monitoringLiveBadge :where(.mantine-Badge-section[data-position="left"]) {
+  align-items: center;
+  display: inline-flex;
+  margin-inline-end: 6px;
+}
+
+.monitoringLiveDot {
+  animation: monitoringPulse 1.8s ease-in-out infinite;
+  background: var(--mantine-color-grape-filled);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  height: 6px;
+  width: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monitoringLiveDot {
+    animation: none;
+  }
+}
+
+@keyframes monitoringPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+}
+
+@media (max-width: 48em) {
+  .monitoringPreviewTopBar {
+    flex-direction: column;
+  }
 }
