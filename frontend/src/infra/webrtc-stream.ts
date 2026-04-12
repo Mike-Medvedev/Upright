@@ -7,12 +7,33 @@ const DEFAULT_WORKFLOWS_PARAMETERS: Record<string, unknown> = {
   threshold_ratio: 0.8,
 };
 
+/** Shared constraints for local preview and Roboflow ingest (no WebRTC until inference starts). */
+const MONITORING_CAMERA_CONSTRAINTS = {
+  video: {
+    facingMode: "user" as const,
+    width: { ideal: 1920, min: 1280 },
+    height: { ideal: 1080, min: 720 },
+    frameRate: { ideal: 60, max: 60 },
+  },
+  audio: false,
+};
+
 export type WebRtcStreamConnection = Awaited<ReturnType<typeof webrtc.useStream>>;
 
 export interface InitWebRtcStreamOptions {
   /** Merged into default workflow parameters (calibration, thresholds). */
   workflowsParameters?: Record<string, unknown>;
   onData?: (data: WebRTCOutputData) => void;
+  /**
+   * Use this camera stream for inference. If omitted, a new capture is opened via {@link streams.useCamera}.
+   * Pass the same stream as the on-page local preview so the user does not get a second permission prompt.
+   */
+  source?: MediaStream;
+}
+
+/** Local camera only — no Roboflow / WebRTC. Use for idle preview on Monitoring. */
+export async function getLocalCameraStream(): Promise<MediaStream> {
+  return streams.useCamera(MONITORING_CAMERA_CONSTRAINTS);
 }
 
 /**
@@ -30,16 +51,10 @@ export async function initWebRtcStream(
     ...options.workflowsParameters,
   };
 
+  const source = options.source ?? (await streams.useCamera(MONITORING_CAMERA_CONSTRAINTS));
+
   const connection = await webrtc.useStream({
-    source: await streams.useCamera({
-      video: {
-        facingMode: "user",
-        width: { ideal: 1920, min: 1280 },
-        height: { ideal: 1080, min: 720 },
-        frameRate: { ideal: 60, max: 60 },
-      },
-      audio: false,
-    }),
+    source,
     connector,
     wrtcParams: {
       workspaceName: "gilded-6esmg",

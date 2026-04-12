@@ -1,39 +1,41 @@
+/* Fill AppShell main row (grid 1fr); video shell flexes so footer + CTA stay in view */
 .monitoringPage {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   margin-inline: auto;
   max-width: 1200px;
+  min-height: 0;
+  overflow: hidden;
   width: 100%;
 }
 
 .monitoringPreviewCard {
-  backdrop-filter: blur(14px);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--mantine-radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
   overflow: hidden;
-  transition:
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
+  transition: border-color 0.25s ease;
 }
 
 .monitoringPreviewCard_live {
-  border-color: rgba(180, 130, 220, 0.45);
-  box-shadow:
-    0 8px 36px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(160, 100, 200, 0.15);
+  border-color: rgba(180, 130, 220, 0.5);
 }
 
 .monitoringPreviewCard_paused {
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .monitoringPreviewTopBar {
   align-items: flex-start;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
+  flex-shrink: 0;
   flex-wrap: wrap;
   gap: var(--mantine-spacing-sm);
   justify-content: space-between;
@@ -44,17 +46,12 @@
   line-height: 1.35;
 }
 
-.monitoringVideoShell_idle .monitoringVideo {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .monitoringVideoShell {
-  aspect-ratio: 16 / 9;
   background: rgba(0, 0, 0, 0.45);
   border-radius: 0;
-  flex-shrink: 0;
+  flex: 1 1 0;
   max-width: 100%;
+  min-height: 0;
   overflow: hidden;
   position: relative;
   width: 100%;
@@ -108,7 +105,16 @@
 
 .monitoringPreviewFooter {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
   padding: var(--mantine-spacing-md);
+}
+
+.monitoringPreviewFooter_idle {
+  border-top: none;
+  display: flex;
+  justify-content: center;
+  padding-bottom: var(--mantine-spacing-lg);
+  padding-top: var(--mantine-spacing-md);
 }
 
 .monitoringLiveBadge :where(.mantine-Badge-section[data-position="left"]) {

@@ -3,7 +3,9 @@
     radial-gradient(circle at top, rgba(255, 255, 255, 0.04), transparent 38%),
     linear-gradient(180deg, #0c0c0e 0%, #141416 100%);
   color: #e4e4e7;
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
 .appLayoutHeader {
@@ -58,6 +60,17 @@
 .appLayoutNavbar {
   background: rgba(14, 14, 16, 0.96);
   border-right: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.appLayoutNavbarInner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
 }
 
 .appLayoutNavLink {
@@ -109,5 +122,8 @@
 }
 
 .appLayoutMain {
-  min-height: calc(100vh - 56px);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 }

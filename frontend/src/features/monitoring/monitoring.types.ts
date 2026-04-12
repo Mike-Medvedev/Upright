@@ -37,8 +37,8 @@ export const MONITORING_SESSION_COPY: Record<
     primaryCta: "Start monitoring",
   },
   connecting: {
-    title: "Starting camera",
-    description: "Connecting to inference and turning on your camera…",
+    title: "Starting live posture tracking",
+    description: "Starting live posture tracking",
     primaryCta: "Starting…",
   },
   needsCalibration: {

@@ -1,13 +1,12 @@
-import { Alert, Badge, Box, Button, Group, Loader, Stack, Text, Title } from "@mantine/core";
+import { Alert, Badge, Box, Button, Group, Loader, Stack, Text } from "@mantine/core";
 import { IconRefresh, IconPlayerPause, IconPlayerPlay, IconPlayerStop } from "@tabler/icons-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { initWebRtcStream, type WebRtcStreamConnection } from "@/infra/webrtc-stream";
 import {
-  MONITORING_ALERT_DEFAULTS,
-  MONITORING_ERROR_COPY,
-  MONITORING_SESSION_COPY,
-  type MonitoringSessionState,
-} from "@/features/monitoring/monitoring.types";
+  getLocalCameraStream,
+  initWebRtcStream,
+  type WebRtcStreamConnection,
+} from "@/infra/webrtc-stream";
+import { MONITORING_ERROR_COPY, MONITORING_SESSION_COPY, type MonitoringSessionState } from "@/features/monitoring/monitoring.types";
 import {
   loadCalibrationSnapshot,
   saveCalibrationSnapshot,
@@ -30,6 +29,10 @@ const CALIBRATION_STEPS = [
   },
 ] as const;
 
+function stopMediaStreamTracks(stream: MediaStream | null): void {
+  stream?.getTracks().forEach((t) => t.stop());
+}
+
 function getInputVideoDimensions(connection: WebRtcStreamConnection): { width: number; height: number } {
   const local = connection.localStream();
   const track = local?.getVideoTracks()[0];
@@ -45,12 +48,36 @@ function getInputVideoDimensions(connection: WebRtcStreamConnection): { width: n
 export function MonitoringPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const connectionRef = useRef<WebRtcStreamConnection | null>(null);
+  const localPreviewStreamRef = useRef<MediaStream | null>(null);
 
   const [sessionState, setSessionState] = useState<MonitoringSessionState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [calibrationStep, setCalibrationStep] = useState(0);
+  const [previewReady, setPreviewReady] = useState(false);
 
-  const teardownStream = useCallback(async () => {
+  const startLocalPreview = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video || connectionRef.current) {
+      return;
+    }
+
+    setPreviewReady(false);
+    stopMediaStreamTracks(localPreviewStreamRef.current);
+    localPreviewStreamRef.current = null;
+
+    try {
+      const stream = await getLocalCameraStream();
+      localPreviewStreamRef.current = stream;
+      video.srcObject = stream;
+      await video.play().catch(() => undefined);
+      setPreviewReady(true);
+    } catch {
+      video.srcObject = null;
+      setPreviewReady(false);
+    }
+  }, []);
+
+  const teardownInference = useCallback(async () => {
     const conn = connectionRef.current;
     connectionRef.current = null;
 
@@ -65,10 +92,21 @@ export function MonitoringPage() {
   }, []);
 
   useEffect(() => {
+    void startLocalPreview();
+
     return () => {
-      void teardownStream();
+      setPreviewReady(false);
+      void (async () => {
+        await teardownInference();
+        stopMediaStreamTracks(localPreviewStreamRef.current);
+        localPreviewStreamRef.current = null;
+        const el = videoRef.current;
+        if (el) {
+          el.srcObject = null;
+        }
+      })();
     };
-  }, [teardownStream]);
+  }, [startLocalPreview, teardownInference]);
 
   const applyStreamAndDecideCalibration = useCallback(async () => {
     const video = videoRef.current;
@@ -101,11 +139,13 @@ export function MonitoringPage() {
 
   const handleStart = useCallback(async () => {
     const video = videoRef.current;
-    if (!video) {
+    const previewStream = localPreviewStreamRef.current;
+    if (!video || !previewStream) {
       return;
     }
 
     setErrorMessage(null);
+    localPreviewStreamRef.current = null;
     setSessionState("connecting");
 
     try {
@@ -120,28 +160,33 @@ export function MonitoringPage() {
           : undefined;
 
       const connection = await initWebRtcStream(video, {
+        source: previewStream,
         workflowsParameters,
       });
       connectionRef.current = connection;
 
       await applyStreamAndDecideCalibration();
     } catch (e) {
-      await teardownStream();
+      stopMediaStreamTracks(previewStream);
+      await teardownInference();
+      await startLocalPreview();
       setErrorMessage(e instanceof Error ? e.message : "Something went wrong.");
       setSessionState("error");
     }
-  }, [applyStreamAndDecideCalibration, teardownStream]);
+  }, [applyStreamAndDecideCalibration, startLocalPreview, teardownInference]);
 
-  const handleRetry = useCallback(() => {
+  const handleRetry = useCallback(async () => {
     setErrorMessage(null);
     setSessionState("idle");
-  }, []);
+    await startLocalPreview();
+  }, [startLocalPreview]);
 
   const handleStop = useCallback(async () => {
-    await teardownStream();
+    await teardownInference();
     setSessionState("idle");
     setCalibrationStep(0);
-  }, [teardownStream]);
+    await startLocalPreview();
+  }, [startLocalPreview, teardownInference]);
 
   const handlePause = useCallback(() => {
     setSessionState("paused");
@@ -186,12 +231,8 @@ export function MonitoringPage() {
       : MONITORING_SESSION_COPY[sessionState as Exclude<MonitoringSessionState, "error">];
 
   const isLive = sessionState === "monitoring" || sessionState === "paused";
-  const showVideo =
-    sessionState === "connecting" ||
-    sessionState === "needsCalibration" ||
-    sessionState === "calibrating" ||
-    sessionState === "monitoring" ||
-    sessionState === "paused";
+  const showTopBar =
+    isLive || sessionState === "needsCalibration" || sessionState === "calibrating";
 
   const cardStateClass =
     sessionState === "monitoring"
@@ -201,105 +242,90 @@ export function MonitoringPage() {
         : "monitoringPreviewCard";
 
   return (
-    <Stack className="monitoringPage" gap="lg">
-      <div>
-        <Title order={2}>Monitoring</Title>
-        <Text c="dimmed" mt="xs" size="sm">
-          Live posture session—calibrate once per setup, then stay upright with gentle nudges.
-        </Text>
-      </div>
-
+    <Stack className="monitoringPage" gap={0}>
       <Box className={cardStateClass}>
-        <div className="monitoringPreviewTopBar">
-          <Group gap="sm" wrap="wrap">
-            <Text className="monitoringPreviewTopTitle" fw={600} size="sm">
-              {sessionState === "calibrating"
-                ? (CALIBRATION_STEPS[calibrationStep]?.heading ?? MONITORING_SESSION_COPY.calibrating.title)
-                : sessionCopy.title}
-            </Text>
-            {isLive ? (
-              <Badge
-                className="monitoringLiveBadge"
-                color="grape"
-                leftSection={
-                  sessionState === "monitoring" ? (
-                    <span aria-hidden className="monitoringLiveDot" />
-                  ) : undefined
-                }
-                variant="light"
-              >
-                {sessionState === "monitoring" ? "Live" : "Paused"}
-              </Badge>
-            ) : null}
-            {sessionState === "needsCalibration" || sessionState === "calibrating" ? (
-              <Badge color="yellow" variant="light">
-                Calibration
-              </Badge>
-            ) : null}
-          </Group>
+        {showTopBar ? (
+          <div className="monitoringPreviewTopBar">
+            <Group gap="sm" wrap="wrap">
+              <Text className="monitoringPreviewTopTitle" fw={600} size="sm">
+                {sessionState === "calibrating"
+                  ? (CALIBRATION_STEPS[calibrationStep]?.heading ?? MONITORING_SESSION_COPY.calibrating.title)
+                  : sessionCopy.title}
+              </Text>
+              {isLive ? (
+                <Badge
+                  className="monitoringLiveBadge"
+                  color="grape"
+                  leftSection={
+                    sessionState === "monitoring" ? (
+                      <span aria-hidden className="monitoringLiveDot" />
+                    ) : undefined
+                  }
+                  variant="light"
+                >
+                  {sessionState === "monitoring" ? "Live" : "Paused"}
+                </Badge>
+              ) : null}
+              {sessionState === "needsCalibration" || sessionState === "calibrating" ? (
+                <Badge color="yellow" variant="light">
+                  Calibration
+                </Badge>
+              ) : null}
+            </Group>
 
-          {isLive ? (
-            <Group gap="xs" wrap="wrap">
-              <Button
-                leftSection={<IconRefresh size={16} />}
-                onClick={handleRecalibrate}
-                size="compact-sm"
-                variant="default"
-              >
-                Recalibrate
-              </Button>
-              {sessionState === "monitoring" ? (
+            {isLive ? (
+              <Group gap="xs" wrap="wrap">
                 <Button
-                  leftSection={<IconPlayerPause size={16} />}
-                  onClick={handlePause}
+                  leftSection={<IconRefresh size={16} />}
+                  onClick={handleRecalibrate}
+                  size="compact-sm"
+                  variant="default"
+                >
+                  Recalibrate
+                </Button>
+                {sessionState === "monitoring" ? (
+                  <Button
+                    leftSection={<IconPlayerPause size={16} />}
+                    onClick={handlePause}
+                    size="compact-sm"
+                    variant="light"
+                  >
+                    Pause
+                  </Button>
+                ) : (
+                  <Button
+                    color="grape"
+                    leftSection={<IconPlayerPlay size={16} />}
+                    onClick={handleResume}
+                    size="compact-sm"
+                    variant="filled"
+                  >
+                    Resume
+                  </Button>
+                )}
+                <Button
+                  color="red"
+                  leftSection={<IconPlayerStop size={16} />}
+                  onClick={() => void handleStop()}
                   size="compact-sm"
                   variant="light"
                 >
-                  Pause
+                  Stop
                 </Button>
-              ) : (
-                <Button
-                  color="grape"
-                  leftSection={<IconPlayerPlay size={16} />}
-                  onClick={handleResume}
-                  size="compact-sm"
-                  variant="filled"
-                >
-                  Resume
-                </Button>
-              )}
-              <Button
-                color="red"
-                leftSection={<IconPlayerStop size={16} />}
-                onClick={() => void handleStop()}
-                size="compact-sm"
-                variant="light"
-              >
-                Stop
-              </Button>
-            </Group>
-          ) : null}
-        </div>
+              </Group>
+            ) : null}
+          </div>
+        ) : null}
 
-        <div
-          className={`monitoringVideoShell ${!showVideo ? "monitoringVideoShell_idle" : ""}`}
-        >
+        <div className="monitoringVideoShell">
           <video
             ref={videoRef}
-            aria-label="Posture camera preview"
+            aria-label="Camera preview"
             autoPlay
             className="monitoringVideo"
             muted
             playsInline
           />
-
-          {!showVideo ? (
-            <div className="monitoringVideoPlaceholder">
-              <Text c="dimmed" size="sm" ta="center">
-                Camera preview appears when you start monitoring.
-              </Text>
-            </div>
-          ) : null}
 
           {sessionState === "connecting" ? (
             <div className="monitoringVideoOverlay monitoringVideoOverlay_connecting">
@@ -357,16 +383,19 @@ export function MonitoringPage() {
           ) : null}
         </div>
 
-        <div aria-live="polite" className="monitoringPreviewFooter">
+        <div
+          aria-live="polite"
+          className={`monitoringPreviewFooter ${sessionState === "idle" ? "monitoringPreviewFooter_idle" : ""}`}
+        >
           {sessionState === "idle" ? (
-            <Stack gap="sm">
-              <Text c="dimmed" size="sm">
-                {MONITORING_SESSION_COPY.idle.description}
-              </Text>
-              <Button color="grape" onClick={() => void handleStart()} size="md">
-                {MONITORING_SESSION_COPY.idle.primaryCta}
-              </Button>
-            </Stack>
+            <Button
+              color="grape"
+              disabled={!previewReady}
+              onClick={() => void handleStart()}
+              size="md"
+            >
+              {MONITORING_SESSION_COPY.idle.primaryCta}
+            </Button>
           ) : null}
 
           {sessionState === "error" ? (
@@ -374,24 +403,12 @@ export function MonitoringPage() {
               <Alert color="red" title={MONITORING_ERROR_COPY.title} variant="light">
                 {errorMessage ?? MONITORING_ERROR_COPY.description}
               </Alert>
-              <Button color="grape" onClick={handleRetry} variant="light">
+              <Button color="grape" onClick={() => void handleRetry()} variant="light">
                 {MONITORING_ERROR_COPY.primaryCta}
               </Button>
             </Stack>
           ) : null}
 
-          {sessionState === "connecting" ? (
-            <Text c="dimmed" size="sm">
-              {MONITORING_SESSION_COPY.connecting.description}
-            </Text>
-          ) : null}
-
-          {sessionState === "monitoring" ? (
-            <Text c="dimmed" size="sm">
-              {MONITORING_SESSION_COPY.monitoring.description} Slouch nudges use a{" "}
-              {Math.round(MONITORING_ALERT_DEFAULTS.cooldownMs / 1000)}s cooldown by default.
-            </Text>
-          ) : null}
         </div>
       </Box>
     </Stack>
