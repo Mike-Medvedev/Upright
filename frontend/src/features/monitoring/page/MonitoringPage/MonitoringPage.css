@@ -57,20 +57,15 @@
   width: 100%;
 }
 
-/* Remote Roboflow frames use contain so the full output fits (aspect may differ from the shell). */
+/* Local + remote: fill the shell; crop edges if pipeline aspect differs slightly from the card. */
 .monitoringVideo {
   display: block;
   height: 100%;
   inset: 0;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   position: absolute;
   width: 100%;
-}
-
-/* Local-only preview: fill the frame like a typical webcam tile */
-.monitoringVideo_local {
-  object-fit: cover;
 }
 
 .monitoringVideoPlaceholder {

@@ -322,7 +322,7 @@ export function MonitoringPage() {
             ref={videoRef}
             aria-label="Camera preview"
             autoPlay
-            className={`monitoringVideo${sessionState === "idle" ? " monitoringVideo_local" : ""}`}
+            className="monitoringVideo"
             muted
             playsInline
           />
