@@ -12,21 +12,38 @@ function CameraPreview() {
     }
   }, [cameraStream]);
 
-  useInferencePipeline(cameraStream, (data) => {
-    console.log("Prediciton:", data);
+  const { isConnected } = useInferencePipeline(cameraStream, (data) => {
+    console.log("Prediction:", data);
   });
 
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <Paper w="100%" radius="md" p={0} style={{ aspectRatio: "16/9", overflow: "hidden" }}>
+    <Paper
+      w="100%"
+      radius="md"
+      p={0}
+      style={{ aspectRatio: "16/9", overflow: "hidden", position: "relative" }}>
       <video
         ref={videoRef}
         autoPlay
         muted
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
       />
+      {!isConnected && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.5)",
+          }}>
+          <p style={{ color: "white" }}>Connecting to inference...</p>
+        </div>
+      )}
     </Paper>
   );
 }
