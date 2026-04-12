@@ -15,7 +15,7 @@ const parsedSettings = settingsSchema.safeParse({
 
 if (!parsedSettings.success) {
   throw new ConfigurationError("Frontend environment variables are invalid.", {
-    issues: parsedSettings.error.flatten(),
+    issues: z.treeifyError(parsedSettings.error),
   });
 }
 
