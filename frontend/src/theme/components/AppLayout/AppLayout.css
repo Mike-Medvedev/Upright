@@ -60,13 +60,6 @@
   border-right: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.appLayoutNavbarInner {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: calc(100vh - 56px);
-}
-
 .appLayoutNavLink {
   border-radius: var(--mantine-radius-md);
 }
@@ -117,11 +110,4 @@
 
 .appLayoutMain {
   min-height: calc(100vh - 56px);
-}
-
-.appLayoutMain_monitoring {
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - 56px);
-  padding: 0 !important;
 }
