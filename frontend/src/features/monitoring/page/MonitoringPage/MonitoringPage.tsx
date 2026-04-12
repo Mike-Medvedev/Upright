@@ -1,18 +1,24 @@
 import { Container, Stack, Paper, Button } from "@mantine/core";
-import { useRef, useEffect, useState } from "react";
-import useCamera from "@/features/monitoring/hooks/useCamera";
+import { useEffect, useRef, useState } from "react";
+import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
+import useInferencePipeline from "@/features/monitoring/hooks/useInferencePipeline";
 function CameraPreview() {
-  const { camera, isLoading, error } = useCamera();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const { cameraStream, isLoading, error } = useLocalCamera();
 
   useEffect(() => {
-    if (videoRef.current && camera) {
-      videoRef.current.srcObject = camera;
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
     }
-  }, [camera]);
+  }, [cameraStream]);
+
+  useInferencePipeline(cameraStream, (data) => {
+    console.log("Prediciton:", data);
+  });
 
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
+
   return (
     <Paper w="100%" radius="md" p={0} style={{ aspectRatio: "16/9", overflow: "hidden" }}>
       <video
@@ -24,7 +30,6 @@ function CameraPreview() {
     </Paper>
   );
 }
-
 export function MonitoringPage() {
   const [isCameraActive, setIsCameraActive] = useState(false);
 

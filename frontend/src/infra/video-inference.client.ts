@@ -1,14 +1,5 @@
-import { connectors, webrtc } from "@roboflow/inference-sdk";
-import { getLocalCameraStream } from "@/infra/camera";
-/**
- * Step2. Establish Connection to Roboflow Inference
- */
+import { connectors, webrtc, type WebRTCOutputData } from "@roboflow/inference-sdk";
 
-const connector = connectors.withProxyUrl("/api/init-webrtc");
-
-const liveCameraFeed = await getLocalCameraStream();
-
-//SubStep1. Configure Input pameters for workflow
 const workflowsParameters = {
   is_calibrating: false,
   baseline_height: 100,
@@ -24,20 +15,21 @@ const wrtcParams = {
   processingTimeout: 3600,
   requestedPlan: "webrtc-gpu-medium",
   requestedRegion: "us",
-  /** Drop frames when behind instead of stuttering / “slow motion”. */
   realtimeProcessing: true,
   workflowsParameters,
 };
 
-//SubStep3. Configure handler for recieving workflow predictions
-const onData = (data: webrtc.WebRTCOutputData) => {
-  console.log("Predictions:", data);
-};
+export async function createVideoInferencePipeline(
+  video: MediaStream,
+  onData: (data: WebRTCOutputData) => void,
+): Promise<webrtc.RFWebRTCConnection> {
+  const connector = connectors.withProxyUrl("/api/init-webrtc");
+  const connection = await webrtc.useStream({
+    source: video,
+    connector,
+    wrtcParams: wrtcParams,
+    onData,
+  });
 
-//SubStep4, attempt to actually create a WebRTC connection to Roboflow for real-time inference on video streams.
-export const connection = await webrtc.useStream({
-  source: liveCameraFeed,
-  connector,
-  wrtcParams,
-  onData: onData ?? ((data: webrtc.WebRTCOutputData) => console.log("Predictions:", data)),
-});
+  return connection;
+}
