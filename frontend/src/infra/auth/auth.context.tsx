@@ -4,6 +4,7 @@ import type {
   SignInWithOAuthCredentials,
   SignUpWithPasswordCredentials,
   Provider,
+  User,
 } from "@supabase/supabase-js";
 
 type AllowedProvider = Extract<Provider, "google" | "github">;
@@ -17,6 +18,7 @@ type LoginParams =
   | { type: "oauth"; credentials: MyOAuthCredentials };
 
 export interface AuthContextValue {
+  user: User | null;
   login: (params: LoginParams) => void;
   logout: () => void;
   createUser: (credentials: SignUpWithPasswordCredentials) => void;

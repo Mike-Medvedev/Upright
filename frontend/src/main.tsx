@@ -1,23 +1,16 @@
-import { createRoot } from "react-dom/client";
 import "./index.css";
 import "@mantine/core/styles.css";
+import { createRoot } from "react-dom/client";
 import { MantineProvider } from "@mantine/core";
-import App from "./App.tsx";
 import theme from "@/theme.ts";
-
-import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-  },
-  { path: "/home", element: <div>Home</div> },
-]);
+import { router } from "@/routes";
+import { AuthProvider } from "@/infra/auth/auth.provider";
 
 createRoot(document.getElementById("root")!).render(
   <MantineProvider theme={theme}>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </MantineProvider>,
 );
