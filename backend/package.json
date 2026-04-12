@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "npx tsx --watch src/main.ts",
-    "build": "esbuild src/main.ts --bundle --platform=node --format=esm  --packages=external --outfile=dist/main.js"
+    "dev": "npx tsx --watch src/server.ts",
+    "build": "esbuild src/server.ts --bundle --platform=node --format=esm  --packages=external --outfile=dist/main.js"
   },
   "keywords": [],
   "engines": {
@@ -16,6 +16,7 @@
   "type": "module",
   "dependencies": {
     "@roboflow/inference-sdk": "^0.3.0",
+    "@supabase/supabase-js": "^2.103.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/ws": "^8.18.1",

@@ -5,6 +5,8 @@ alwaysApply: true
 
 # Folder Structure
 
+Shared cross-feature code belongs in `src/lib/` by default. If a module is reused across features and is not specifically middleware, infra, feature-local logic, config, or logger setup, keep it in `lib/`.
+
 ```
 src/
 ├── features/
@@ -19,9 +21,7 @@ src/
 │       ├── <service>.client.ts       # Client connection/setup
 │       └── <service>.service.ts      # Optional wrapper/helpers
 ├── middleware/                        # Express middleware
-├── errors/
-│   └── errors.ts                     # Named error classes
-├── utils/                             # Shared utilities
+├── lib/                               # Shared utilities, helpers, error classes, and other reusable modules
 ├── types/                             # Shared types, .d.ts files, declared namespaces
 ├── configs/                           # Configuration files
 ├── logger/

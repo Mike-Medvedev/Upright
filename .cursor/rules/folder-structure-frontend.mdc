@@ -5,15 +5,16 @@ alwaysApply: true
 
 # Folder Structure & Styling
 
+Shared app code belongs in `lib/` by default. If something is reused across features and is not specifically an integration (`infra/`), route definition (`routes/`), theme artifact (`theme/`), or feature-local concern, put it in `lib/`.
+
 ## Top-level layout
 
 - **`settings.ts`** — App settings and validated environment variables. Uses a Zod schema to parse `import.meta.env` at startup and exports a typed `settings` object. All code reads env vars from `settings` — never from `import.meta.env` directly.
 - **`generated/`** — **Auto-generated** by `@hey-api/openapi-ts` from `openapi.json`. Contains typed SDK functions, Zod schemas, TanStack Query options, and the Axios client. **Never edit manually** — regenerate with `npm run openapi-ts`. Gitignored.
 - **`routes/`** — Route definitions and route-level components (e.g. root layout, index).
 - **`features/`** — Feature-based modules. Each feature (and sub-features) lives here.
-- **`utils/`** — Shared utilities; same level as `features/`.
+- **`lib/`** — Shared app code: utilities, shared helpers, shared constants, shared error classes, and other reusable cross-feature modules.
 - **`infra/`** — Shared integrations (not `lib`): clients (TanStack, Stripe, HTTP), **services** (adapters that wrap those clients), and `hey-api.config.ts` (runtime config for the generated client).
-- **`errors/`** — Custom error classes (e.g. `errors.ts` or `errors/errors.ts`). Used by services and caught by the global error boundary.
 - **`theme/`** — `theme.ts` plus `theme/components/` for shared UI components.
 
 ## Feature structure
@@ -91,18 +92,18 @@ Use the pattern **`<name>.<use>.ts`** (or `.tsx` where applicable) so the file�
 
 | Location | Use suffix | Example |
 |----------|------------|--------|
-| `utils/` | `.utils` | `date.utils.ts`, `format.utils.ts` |
+| `lib/` | `.utils` or direct module name | `date.utils.ts`, `format.utils.ts`, `errors.ts` |
 | `features/<feature>/service/` | `.service` | `banking.service.ts`, `auth.service.ts` |
 | `infra/` | `.client`, `.service` | `tanstack.client.ts`, `stripe.client.ts`, `stripe.service.ts` |
 | `features/<feature>/` | `.types` | `auth.types.ts`, `banking.types.ts` |
 
-- **Utils:** `utils/date.utils.ts`, `utils/format.utils.ts`
+- **Shared utilities:** `lib/date.utils.ts`, `lib/format.utils.ts`
 - **Feature types (interfaces + Zod):** `features/auth/auth.types.ts`, `features/banking/banking.types.ts`
 - **Global types:** `types.ts` or `global.types.ts` at src root — namespaces, `declare global`, shared types
 - **Feature services:** `features/banking/service/banking.service.ts`
 - **Infra clients:** `infra/tanstack.client.ts`, `infra/stripe.client.ts`, `infra/http.client.ts`
 - **Infra services (adapters):** `infra/stripe.service.ts` — wraps a client, shared across features
-- **Errors:** `errors/errors.ts` — custom error classes (e.g. `NotFoundError`, `ValidationError`)
+- **Shared errors:** `lib/errors.ts` — custom error classes (e.g. `NotFoundError`, `ValidationError`)
 
 Use the same idea for other types (e.g. `something.hook.ts`, `something.page.tsx`) where it helps.
 

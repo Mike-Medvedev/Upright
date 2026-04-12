@@ -32,7 +32,7 @@ Only use try/catch when you need to handle a specific error locally (e.g. fallba
 
 ## Defining Named Errors
 
-All named errors live in `src/errors/errors.ts`. Extend `Error`, set `this.name`, and use `{ cause }` to preserve the original error.
+All named errors live in `src/lib/errors.ts`. Extend `Error`, set `this.name`, and use `{ cause }` to preserve the original error.
 
 ```typescript
 export class BookNotFoundError extends Error {
@@ -73,7 +73,7 @@ router.get("/sync", SyncController.beginIdentitySync);
 
 ## Rules
 
-- Every new named error must be added to `src/errors/errors.ts`
+- Every new named error must be added to `src/lib/errors.ts`
 - Every new named error must get a corresponding `instanceof` branch in `error.middleware.ts`
 - Use `logger.warn` for 4xx (client errors) and `logger.error` for 5xx (server errors)
 - Use `sendError(res, status, "CODE", message)` from `src/utils/api-response.ts`
