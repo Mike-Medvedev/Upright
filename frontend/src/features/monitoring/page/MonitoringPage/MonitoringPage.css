@@ -1,81 +1,94 @@
-.monitoringPage {
-  margin-inline: auto;
-  max-width: 1200px;
+.monitoringSrOnly {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.monitoringRoot {
+  box-sizing: border-box;
   width: 100%;
 }
 
-.monitoringPreviewCard {
-  backdrop-filter: blur(14px);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--mantine-radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+.monitoringRoot_idle {
+  align-items: center;
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition:
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
+  flex: 1;
+  justify-content: center;
+  min-height: calc(100vh - 56px);
 }
 
-.monitoringPreviewCard_live {
-  border-color: rgba(180, 130, 220, 0.45);
-  box-shadow:
-    0 8px 36px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(160, 100, 200, 0.15);
-}
-
-.monitoringPreviewCard_paused {
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
-}
-
-.monitoringPreviewTopBar {
-  align-items: flex-start;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+.monitoringRoot_error {
+  align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--mantine-spacing-sm);
-  justify-content: space-between;
+  flex: 1;
+  justify-content: center;
+  min-height: calc(100vh - 56px);
   padding: var(--mantine-spacing-md);
 }
 
-.monitoringPreviewTopTitle {
+.monitoringRoot_session {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: calc(100vh - 56px);
+  overflow: hidden;
+  position: relative;
+}
+
+.monitoringTopBar {
+  align-items: flex-start;
+  backdrop-filter: blur(12px);
+  background: rgba(12, 12, 14, 0.82);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-sm);
+  justify-content: space-between;
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  position: relative;
+  z-index: 2;
+}
+
+.monitoringTopBar_live {
+  border-bottom-color: rgba(160, 100, 200, 0.35);
+}
+
+.monitoringTopBar_paused {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.monitoringTopBarTitle {
   line-height: 1.35;
 }
 
-.monitoringVideoShell_idle .monitoringVideo {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .monitoringVideoShell {
-  aspect-ratio: 16 / 9;
   background: rgba(0, 0, 0, 0.45);
-  border-radius: 0;
-  flex-shrink: 0;
-  max-width: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   position: relative;
   width: 100%;
 }
 
+.monitoringVideoShell_active .monitoringVideo {
+  opacity: 1;
+}
+
 .monitoringVideo {
   display: block;
   height: 100%;
+  left: 0;
   object-fit: cover;
-  width: 100%;
-}
-
-.monitoringVideoPlaceholder {
-  align-items: center;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  height: 100%;
-  inset: 0;
-  justify-content: center;
-  padding: var(--mantine-spacing-lg);
+  opacity: 0;
   position: absolute;
+  top: 0;
   width: 100%;
 }
 
@@ -90,6 +103,7 @@
   position: absolute;
   text-align: center;
   width: 100%;
+  z-index: 1;
 }
 
 .monitoringVideoOverlay_connecting {
@@ -104,11 +118,6 @@
 .monitoringVideoOverlay_paused {
   backdrop-filter: blur(4px);
   background: rgba(0, 0, 0, 0.5);
-}
-
-.monitoringPreviewFooter {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding: var(--mantine-spacing-md);
 }
 
 .monitoringLiveBadge :where(.mantine-Badge-section[data-position="left"]) {
@@ -147,7 +156,7 @@
 }
 
 @media (max-width: 48em) {
-  .monitoringPreviewTopBar {
+  .monitoringTopBar {
     flex-direction: column;
   }
 }

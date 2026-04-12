@@ -1,5 +1,5 @@
 import { AppShell, Avatar, Box, Group, Loader, Menu, NavLink, Stack, Text, Title } from "@mantine/core";
-import { IconChartBar, IconVideo } from "@tabler/icons-react";
+import { IconChartBar, IconSettings, IconVideo } from "@tabler/icons-react";
 import { useState } from "react";
 import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/infra/auth/auth.context";
@@ -105,31 +105,45 @@ export function AppLayout() {
       </AppShell.Header>
 
       <AppShell.Navbar className="appLayoutNavbar" p="md">
-        <Stack gap={6}>
+        <Stack className="appLayoutNavbarInner" flex={1} gap={0} justify="space-between">
+          <Stack gap={6}>
+            <NavLink
+              active={location.pathname === "/monitoring"}
+              classNames={navLinkClassNames}
+              color="grape"
+              component={RouterNavLink}
+              label="Monitoring"
+              leftSection={<IconVideo className="appLayoutNavIcon" size={18} stroke={1.5} />}
+              to="/monitoring"
+              variant="subtle"
+            />
+            <NavLink
+              active={location.pathname === "/analytics"}
+              classNames={navLinkClassNames}
+              color="grape"
+              component={RouterNavLink}
+              label="Analytics"
+              leftSection={<IconChartBar className="appLayoutNavIcon" size={18} stroke={1.5} />}
+              to="/analytics"
+              variant="subtle"
+            />
+          </Stack>
           <NavLink
-            active={location.pathname === "/monitoring"}
+            active={location.pathname === "/settings"}
             classNames={navLinkClassNames}
             color="grape"
             component={RouterNavLink}
-            label="Monitoring"
-            leftSection={<IconVideo className="appLayoutNavIcon" size={18} stroke={1.5} />}
-            to="/monitoring"
-            variant="subtle"
-          />
-          <NavLink
-            active={location.pathname === "/analytics"}
-            classNames={navLinkClassNames}
-            color="grape"
-            component={RouterNavLink}
-            label="Analytics"
-            leftSection={<IconChartBar className="appLayoutNavIcon" size={18} stroke={1.5} />}
-            to="/analytics"
+            label="Settings"
+            leftSection={<IconSettings className="appLayoutNavIcon" size={18} stroke={1.5} />}
+            to="/settings"
             variant="subtle"
           />
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main className="appLayoutMain">
+      <AppShell.Main
+        className={`appLayoutMain ${location.pathname === "/monitoring" ? "appLayoutMain_monitoring" : ""}`}
+      >
         <Outlet />
       </AppShell.Main>
     </AppShell>
