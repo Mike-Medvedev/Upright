@@ -1,0 +1,2 @@
+[WebRTC diagnostics] video element (decoded dimensions) ObjectclientHeight: 626clientWidth: 630videoHeight: 360videoWidth: 640[[Prototype]]: Object
+react-dom_client.js?v=c4069a29:1806 Unsupported style property &:hover:not(:disabled):not([data-disabled]). Did you mean &:hover:not(:disabled):not([dataDisabled])?
