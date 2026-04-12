@@ -1,0 +1,26 @@
+---
+description: UI components — all CSS in co-located files, no inline styles ever
+alwaysApply: true
+---
+
+# UI Components & CSS
+
+- **All styles live in a CSS file.** Every component has a co-located `.css` or `.module.css` file. No inline CSS for anything.
+- **No `style={{ }}`.** Do not use the `style` prop or inline style objects.
+- **No style strings.** Do not use inline `style="..."` in JSX/HTML.
+
+```tsx
+# ✅ GOOD
+// Button.tsx
+import './Button.css'
+export function Button({ children }) {
+  return <button className="btn">{children}</button>
+}
+
+# ❌ BAD
+<button style={{ padding: 8, color: 'blue' }}>Click</button>
+<div style={{ marginTop: 16 }}>...</div>
+<span style="font-weight: bold">...</span>
+```
+
+Use classes (and CSS modules if you prefer) in the co-located CSS file for all layout, spacing, colors, and typography.

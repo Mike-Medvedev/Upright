@@ -1,0 +1,162 @@
+---
+description: Feature-based folder structure, infra vs lib, theme, and CSS-only styling (no inline styles)
+alwaysApply: true
+---
+
+# Folder Structure & Styling
+
+## Top-level layout
+
+- **`settings.ts`** — App settings and validated environment variables. Uses a Zod schema to parse `import.meta.env` at startup and exports a typed `settings` object. All code reads env vars from `settings` — never from `import.meta.env` directly.
+- **`generated/`** — **Auto-generated** by `@hey-api/openapi-ts` from `openapi.json`. Contains typed SDK functions, Zod schemas, TanStack Query options, and the Axios client. **Never edit manually** — regenerate with `npm run openapi-ts`. Gitignored.
+- **`routes/`** — Route definitions and route-level components (e.g. root layout, index).
+- **`features/`** — Feature-based modules. Each feature (and sub-features) lives here.
+- **`utils/`** — Shared utilities; same level as `features/`.
+- **`infra/`** — Shared integrations (not `lib`): clients (TanStack, Stripe, HTTP), **services** (adapters that wrap those clients), and `hey-api.config.ts` (runtime config for the generated client).
+- **`errors/`** — Custom error classes (e.g. `errors.ts` or `errors/errors.ts`). Used by services and caught by the global error boundary.
+- **`theme/`** — `theme.ts` plus `theme/components/` for shared UI components.
+
+## Feature structure
+
+Each feature (and sub-feature) uses this layout:
+
+```
+features/
+  auth/
+    components/   # Feature-specific components
+    hooks/       # Feature-specific hooks
+    page/        # The actual page(s)
+    service/     # Feature-specific service/API
+  dashboard/
+    components/
+    hooks/
+    page/
+    service/
+    reports/     # Sub-feature with same structure
+      components/
+      hooks/
+      page/
+      service/
+```
+
+- **`components/`** — Components used only in this feature. Each component with a CSS file lives in a **named folder** (see [Component folder convention](#component-folder-convention)). Components without CSS stay as flat files.
+- **`hooks/`** — Hooks used only in this feature.
+- **`page/`** — Page component(s) for the feature. Pages with a CSS file also use a named folder.
+- **`service/`** — API or business logic for the feature.
+
+## Infra structure
+
+`infra/` holds **clients** (SDKs, HTTP instance) and **services** (adapters that use those clients, shared across features).
+
+```
+infra/
+  http.client.ts       # Axios instance, auth, headers
+  tanstack.client.ts  # Query client config
+  stripe.client.ts    # Stripe SDK instance
+  stripe.service.ts   # Adapter: wraps stripe.client, used by features
+```
+
+- **`.client.ts`** — Raw client/SDK setup (Stripe, Axios, TanStack Query, etc.).
+- **`.service.ts`** — Adapter or shared service that uses a client; e.g. `stripe.service.ts` wraps `stripe.client.ts` and exposes methods used by multiple features.
+
+## Theme & shared UI
+
+- **`theme/theme.ts`** — Theme config (e.g. Mantine or custom).
+- **`theme/components/`** — Shared UI (Button, Card, etc.). Each component with CSS uses a named folder (see below).
+
+## Types & validation
+
+- **Feature types:** Put TypeScript interfaces and Zod schemas for a feature in **`<feature-name>.types.ts`** inside that feature folder (e.g. `features/auth/auth.types.ts`, `features/banking/banking.types.ts`). Use Zod for validation; inferred types and interfaces can live in the same file.
+- **Global types:** Put app-wide types, namespace declarations, and shared type definitions in a single **`types.ts`** (or `global.types.ts`) at the same level as `features/` (e.g. `src/types.ts`). Use this for things like `declare global`, module augmentation, and types used across multiple features.
+- **No types outside type files.** All `type`, `interface`, and `enum` definitions must live in `*.types.ts` (feature-level) or `types.ts` (global) — **never** in services, hooks, utils, or other non-type files. The only exception is **React component props** (`interface FooProps { ... }`), which stay in the component file they belong to.
+
+```text
+features/banking/banking.types.ts   # Account, Transaction, accountSchema, etc.
+src/types.ts                       # Global types, namespaces, shared enums
+
+# ✅ GOOD — payload types in the feature types file
+features/search/search.types.ts    # SearchCriteria, CreateSearchPayload, etc.
+
+# ✅ GOOD — component props stay in the component
+features/search/components/SearchCard/SearchCard.tsx   # interface SearchCardProps { ... }
+
+# ❌ BAD — types defined in service or hook files
+features/search/service/search.service.ts   # export interface CreateSearchPayload
+features/search/hooks/search.hook.ts        # export type SomeType = ...
+```
+
+## File naming: `<name>.<use>.ts`
+
+Use the pattern **`<name>.<use>.ts`** (or `.tsx` where applicable) so the file’s role is clear from its name.
+
+| Location | Use suffix | Example |
+|----------|------------|--------|
+| `utils/` | `.utils` | `date.utils.ts`, `format.utils.ts` |
+| `features/<feature>/service/` | `.service` | `banking.service.ts`, `auth.service.ts` |
+| `infra/` | `.client`, `.service` | `tanstack.client.ts`, `stripe.client.ts`, `stripe.service.ts` |
+| `features/<feature>/` | `.types` | `auth.types.ts`, `banking.types.ts` |
+
+- **Utils:** `utils/date.utils.ts`, `utils/format.utils.ts`
+- **Feature types (interfaces + Zod):** `features/auth/auth.types.ts`, `features/banking/banking.types.ts`
+- **Global types:** `types.ts` or `global.types.ts` at src root — namespaces, `declare global`, shared types
+- **Feature services:** `features/banking/service/banking.service.ts`
+- **Infra clients:** `infra/tanstack.client.ts`, `infra/stripe.client.ts`, `infra/http.client.ts`
+- **Infra services (adapters):** `infra/stripe.service.ts` — wraps a client, shared across features
+- **Errors:** `errors/errors.ts` — custom error classes (e.g. `NotFoundError`, `ValidationError`)
+
+Use the same idea for other types (e.g. `something.hook.ts`, `something.page.tsx`) where it helps.
+
+## Component folder convention
+
+When a component has a co-located CSS file, wrap both files in a **named folder** matching the component name. The `.tsx` file imports its CSS with a **relative** `./` path. Components without CSS stay as flat files in their parent directory.
+
+```text
+# ✅ GOOD — component + CSS in a named folder
+features/search/components/SearchCard/
+  SearchCard.tsx       # imports './SearchCard.css'
+  SearchCard.css
+
+theme/components/AppLayout/
+  AppLayout.tsx        # imports './AppLayout.css'
+  AppLayout.css
+
+features/search/page/DashboardPage/
+  DashboardPage.tsx    # imports './DashboardPage.css'
+  DashboardPage.css
+
+# ✅ GOOD — component without CSS stays flat
+features/search/components/DashboardContent.tsx
+
+# ❌ BAD — .tsx and .css sitting loose together in the parent directory
+features/search/components/SearchCard.tsx
+features/search/components/SearchCard.css
+```
+
+When importing a component from a named folder, use the full path to the file:
+
+```typescript
+// ✅ GOOD
+import { SearchCard } from '@/features/search/components/SearchCard/SearchCard'
+import { AppLayout } from '@/theme/components/AppLayout/AppLayout'
+
+// ❌ BAD — barrel/index import (no index files)
+import { SearchCard } from '@/features/search/components/SearchCard'
+```
+
+## Styling rules
+
+- **No inline styles.** Use CSS (or CSS modules) only.
+- **One CSS file per component.** For every `ComponentName.tsx` that needs styles, create `ComponentName.css` in the same named folder.
+- **Relative CSS imports.** Components import their own CSS with `./ComponentName.css`, not an absolute `@/` path.
+
+```text
+# ✅ GOOD
+theme/components/AppError/AppError.tsx
+theme/components/AppError/AppError.css
+
+# ❌ BAD — inline styles
+<button style={{ padding: 8, color: 'blue' }}>Click</button>
+
+# ❌ BAD — absolute path for own CSS
+import '@/features/search/components/SearchCard/SearchCard.css'
+```

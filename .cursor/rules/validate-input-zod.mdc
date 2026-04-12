@@ -1,0 +1,71 @@
+---
+description: Always validate untrusted input with Zod schemas before use
+alwaysApply: true
+---
+
+# Validate Untrusted Input with Zod
+
+**All untrusted input must be validated with a Zod schema before use.** Do not trust API responses, form payloads, URL/search params, or any external data without parsing and validating.
+
+## What counts as untrusted
+
+- API/backend responses (especially from your own API after network)
+- Form submissions and request bodies
+- URL/search params and route params
+- LocalStorage/sessionStorage values
+- Any data from outside the current app (third-party APIs, user paste, etc.)
+
+## Pattern
+
+1. **Define a Zod schema** (in feature `*.types.ts` or where types live).
+2. **Parse, don’t cast.** Use `schema.parse()` or `schema.safeParse()` at the boundary where data enters your app.
+3. **Handle failures.** On `safeParse()`, check `.success` and handle `.error` (e.g. show validation errors or fallback).
+
+```typescript
+// ✅ GOOD — validate API response
+const accountSchema = z.object({ id: z.string(), name: z.string(), balance: z.number() })
+const response = await httpClient.get('/accounts')
+const accounts = accountSchema.array().parse(response.data)
+
+// ✅ GOOD — validate with safeParse and handle failure
+const result = userSchema.safeParse(formData)
+if (!result.success) {
+  setErrors(result.error.flatten())
+  return
+}
+const user = result.data
+
+// ❌ BAD — no validation
+const accounts = response.data as Account[]
+
+// ❌ BAD — type assertion only
+const user = formData as User
+```
+
+## Where to validate
+
+- **Services:** Parse API responses before returning (e.g. `accountSchema.array().parse(data)`). Throw or return a Result on failure.
+- **Forms:** Validate on submit (and optionally on blur/change) using Zod; use `.safeParse()` and map errors to field-level messages.
+- **Route/URL params:** Parse query or params with a Zod schema before using in components or hooks.
+
+Keep schemas next to types (e.g. in `<feature>.types.ts`) and reuse them for both runtime validation and TypeScript inference (`z.infer<typeof schema>`).
+
+## Zod version
+
+This project uses **Zod v4**. Always import from `zod/v4`:
+
+```typescript
+import { z } from 'zod/v4'
+```
+
+For Mantine form validation, use `zod4Resolver` from `mantine-form-zod-resolver` — **not** the deprecated `zodResolver` from `@mantine/form`:
+
+```typescript
+import { useForm } from '@mantine/form'
+import { zod4Resolver } from 'mantine-form-zod-resolver'
+
+const form = useForm({
+  initialValues: { name: '' },
+  validate: zod4Resolver(schema),
+})
+```

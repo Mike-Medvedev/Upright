@@ -1,0 +1,67 @@
+---
+description: Error handling — custom Error classes in errors/, react-error-boundary for global catch
+alwaysApply: true
+---
+
+# Error Handling
+
+When implementing or changing error handling, follow the patterns in **`.agents/skills/error-handling-patterns/SKILL.md`**.
+
+## Layout
+
+- **`errors/`** — Custom error classes in `errors/errors.ts` (or split by domain if needed). All app errors extend a base and are thrown from services/hooks.
+- **Global boundary** — Use **react-error-boundary** to catch errors in the React tree. Wrap the app (e.g. in root layout or `main.tsx`) with `<ErrorBoundary>` and render a fallback UI (and optionally report to logging).
+
+## Custom error classes
+
+Define classes that extend `Error` with a stable `name`, optional `code`, and `statusCode` for HTTP-like semantics. Put them in `errors/errors.ts`.
+
+- **Base:** `ApplicationError` (or `AppError`) with `message`, `code`, `statusCode`, optional `details`.
+- **Required:** `NotFoundError` — for 404s (e.g. route not found, resource not found). Use for not-found route page and when a resource is missing.
+- **Others as needed:** `ValidationError`, `UnauthorizedError`, `ExternalServiceError`, etc.
+
+```typescript
+// errors/errors.ts
+export class ApplicationError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public statusCode: number = 500,
+    public details?: Record<string, unknown>,
+  ) {
+    super(message)
+    this.name = this.constructor.name
+    Object.setPrototypeOf(this, new.target.prototype)
+  }
+}
+
+export class NotFoundError extends ApplicationError {
+  constructor(resource: string, id?: string) {
+    super(
+      id ? `${resource} not found` : resource,
+      'NOT_FOUND',
+      404,
+      id ? { resource, id } : undefined,
+    )
+  }
+}
+
+// Use for 404 route: throw new NotFoundError('Page not found') or NotFoundError for missing data
+```
+
+## Catching in the UI
+
+- **Global:** Use **react-error-boundary**. Wrap the app (or router outlet) with `<ErrorBoundary fallback={<ErrorFallback />} onError={logError}>`. When any child throws (or a hook triggers the boundary), the fallback is shown.
+- **Not-found routes:** In the router, render a not-found route that shows a 404 page. When a route doesn’t match, show that page; when code explicitly throws `NotFoundError` (e.g. “resource not found”), the global boundary can show the same or a dedicated “resource not found” UI. Ensure the not-found route page exists and is used for 404s.
+
+## Flow
+
+1. **Services/hooks** throw custom errors (e.g. `NotFoundError`, `ValidationError`) from `errors/errors.ts`.
+2. **React tree** — Uncaught errors are caught by the **react-error-boundary** wrapper; render a fallback and optionally call `onError` for logging.
+3. **Not-found:** Provide a not-found route (e.g. `path="*"` or `path="/404"`) that renders a dedicated “Page not found” (404) component. Use `NotFoundError` when a resource is missing so the boundary or handler can show the appropriate UI.
+
+## Summary
+
+- Custom errors live in **`errors/errors.ts`**; classes extend `Error` (and preferably a base `ApplicationError`).
+- **`NotFoundError`** is required — use for missing routes/resources and for the not-found route page.
+- Use **react-error-boundary** at the app root to catch errors and show a global fallback; no inline try/catch for generic UI errors unless you need local recovery.

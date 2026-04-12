@@ -1,0 +1,58 @@
+---
+description: Every mutation / async action must show loading feedback to the user
+alwaysApply: true
+---
+
+# Mutation Loading Feedback
+
+**Every `useMutation` must give visible feedback while pending.** The user must always know something is happening. No silent async actions.
+
+## Required for every mutation trigger
+
+1. **Disable** the triggering element (`disabled={mutation.isPending}`)
+2. **Show a spinner or loading state** (Mantine `loading` prop, `<Loader />`, or text change like "Deleting...")
+3. **Prevent double-submission** (disabled handles this)
+
+## Patterns
+
+### Button with `loading` prop (preferred for Mantine buttons)
+
+```tsx
+<Button loading={mutation.isPending} onClick={handleSubmit}>
+  Save
+</Button>
+```
+
+### ActionIcon with spinner swap
+
+```tsx
+<ActionIcon disabled={isDeleting} onClick={() => onDelete(id)}>
+  {isDeleting ? <Loader size={14} /> : <IconTrash size={16} />}
+</ActionIcon>
+```
+
+### Custom button with text change
+
+```tsx
+<button onClick={handleExecute} disabled={mutation.isPending}>
+  {mutation.isPending ? <Loader size={16} /> : <IconPlay size={16} />}
+  <span>{mutation.isPending ? 'Searching...' : 'Execute'}</span>
+</button>
+```
+
+## Per-item mutations in lists
+
+When a list has one mutation shared across items (e.g. delete), track which item is pending:
+
+```tsx
+const deletingId = deleteMutation.isPending
+  ? (deleteMutation.variables?.path?.id ?? null)
+  : null
+
+// Pass to each item
+<Card isDeleting={deletingId === item.id} />
+```
+
+## Duplicate triggers
+
+If the same action has multiple triggers (e.g. a header button and an empty-state button), **all** triggers must show loading state — not just one.

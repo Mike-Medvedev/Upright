@@ -1,0 +1,75 @@
+---
+description: Use React Activity to preserve UI and internal state when hiding/showing content instead of unmounting
+alwaysApply: true
+---
+
+# Maintaining UI State with Activity
+
+Use React’s **`<Activity />`** when you need to hide and later restore the UI and internal state of children, instead of unmounting them.
+
+## When to use Activity
+
+- **Sidebars, panels, drawers** — Toggle visibility without losing expanded state or scroll position.
+- **Tabs** — Keep each tab’s DOM and state (e.g. form drafts, scroll) when switching tabs.
+- **Pre-rendering** — Render content in `mode="hidden"` so it’s ready when the user navigates (faster first paint when it becomes visible).
+- **Selective hydration** — Activity boundaries help React hydrate visible parts first; tab buttons can be interactive before heavy tab content is ready.
+
+Prefer **Activity** over conditional mount/unmount whenever you want to **preserve state** across hide/show.
+
+## Basic usage
+
+```tsx
+import { Activity, useState } from 'react'
+
+// Hide/show while keeping state
+<Activity mode={isShowingSidebar ? 'visible' : 'hidden'}>
+  <Sidebar />
+</Activity>
+
+// Tabs: each tab keeps its state and DOM
+<Activity mode={activeTab === 'home' ? 'visible' : 'hidden'}>
+  <Home />
+</Activity>
+<Activity mode={activeTab === 'contact' ? 'visible' : 'hidden'}>
+  <Contact />
+</Activity>
+```
+
+- **`mode`:** `'visible'` | `'hidden'`. Default `'visible'` if omitted.
+- **Hidden:** Children are visually hidden (`display: none`), their **Effects are cleaned up** (no active subscriptions). React keeps component and DOM state.
+- **Visible again:** Previous state is restored and Effects are re-created.
+
+## With Suspense (pre-rendering)
+
+Use Activity + Suspense so hidden tabs (or routes) can load data before they’re shown:
+
+```tsx
+<Suspense fallback={<Loading />}>
+  <Activity mode={activeTab === 'home' ? 'visible' : 'hidden'}>
+    <Home />
+  </Activity>
+  <Activity mode={activeTab === 'posts' ? 'visible' : 'hidden'}>
+    <Posts />
+  </Activity>
+</Suspense>
+```
+
+## Side effects when hidden
+
+When an Activity is **hidden**, its children’s Effects run their **cleanup**. For DOM that keeps playing (e.g. `<video>`, `<audio>`, `<iframe>`), add an Effect that pauses or stops playback in the cleanup so hidden content doesn’t keep running:
+
+```tsx
+// e.g. in a Video tab component
+useLayoutEffect(() => {
+  const el = videoRef.current
+  return () => { el?.pause() }
+}, [])
+```
+
+Prefer **cleanup in Effects** over relying on mount-only logic so behavior is correct when the boundary becomes hidden. Use **StrictMode** to catch missing cleanups.
+
+## Summary
+
+- Use **`<Activity mode={condition ? 'visible' : 'hidden'}>`** instead of `{condition && <Child />}` when you need to **preserve** child state and DOM across hide/show.
+- Hidden Activity: `display: none` + Effects cleaned up; state and DOM kept.
+- For `<video>` / `<audio>` / `<iframe>`, clean up in an Effect (e.g. pause) when the component is hidden by Activity.

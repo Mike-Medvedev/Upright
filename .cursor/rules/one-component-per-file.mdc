@@ -1,0 +1,21 @@
+---
+description: One React component per file — never define multiple components in a single file
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# One Component Per File
+
+Every React component must live in its own file. Never define multiple components in the same file.
+
+```text
+# ✅ GOOD
+features/search/page/NewSearchPage.tsx       # NewSearchPage
+features/search/page/SearchForm.tsx          # SearchForm
+features/search/components/SearchCard.tsx    # SearchCard
+
+# ❌ BAD — two components in one file
+features/search/page/NewSearchPage.tsx       # NewSearchPage + SearchForm
+```
+
+If a component is only used by one parent, it still gets its own file in the same directory. Extract it, give it a co-located CSS file if it has styles, and import it.
