@@ -5,6 +5,8 @@ import { useRef } from "react";
 import type { InferenceOutputData } from "@/features/monitoring/monitoring.types";
 import { monitoringService } from "@/features/monitoring/service/monitoring.service";
 export function CameraPreview() {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
   const handlePrediction = (data: InferenceOutputData) => {
     console.log("Predictions: ", data);
     const predictions = data.serialized_output_data?.output?.predictions?.[0];
@@ -22,7 +24,7 @@ export function CameraPreview() {
     ctx.fillText(isHealthyPosture ? "Healthy" : "Slouching", 20, 40);
   };
 
-  const { videoRef, isLoading, error } = useLiveVideoInference(handlePrediction);
+  const { isLoading, error } = useLiveVideoInference({ videoRef, onData: handlePrediction });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   if (error) return <Text c="red">{error.message}</Text>;

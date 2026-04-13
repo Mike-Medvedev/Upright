@@ -1,11 +1,15 @@
 import { inferenceClient } from "@/infra/inference.client";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import type { InferenceOutputData } from "@/features/monitoring/monitoring.types";
 import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
 
-export function useLiveVideoInference(onData: (data: InferenceOutputData) => void) {
+interface LiveVideoInterfaceProps {
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  onData: (data: InferenceOutputData) => void;
+}
+
+export function useLiveVideoInference({ videoRef, onData }: LiveVideoInterfaceProps) {
   const { cameraStream } = useLocalCamera();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isLoading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -15,7 +19,7 @@ export function useLiveVideoInference(onData: (data: InferenceOutputData) => voi
     if (videoRef.current && cameraStream) {
       videoRef.current.srcObject = cameraStream;
     }
-  }, [cameraStream]);
+  }, [cameraStream, videoRef]);
 
   useEffect(() => {
     if (!cameraStream) {
@@ -41,5 +45,5 @@ export function useLiveVideoInference(onData: (data: InferenceOutputData) => voi
     };
   }, [cameraStream]);
 
-  return { videoRef, isLoading, error };
+  return { isLoading, error };
 }
