@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 
 function useLocalCamera() {
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<LocalCameraError | null>(null);
@@ -12,7 +13,7 @@ function useLocalCamera() {
     getLocalCameraStream()
       .then((stream) => {
         cameraStreamRef.current = stream;
-        setCameraStream(stream); // triggers re-render so CameraPreview can react
+        setCameraStream(stream);
       })
       .catch((error) => setError(cameraError(error)))
       .finally(() => setIsLoading(false));
@@ -25,11 +26,17 @@ function useLocalCamera() {
   }, []);
 
   useEffect(() => {
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream]);
+
+  useEffect(() => {
     start();
     return () => stop();
   }, [start, stop]);
 
-  return { cameraStream, isLoading, error };
+  return { cameraStream, videoRef, isLoading, error };
 }
 export default useLocalCamera;
 
