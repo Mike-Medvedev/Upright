@@ -15,7 +15,14 @@ function useLocalCamera() {
         cameraStreamRef.current = stream;
         setCameraStream(stream);
       })
-      .catch((error) => setError(cameraError(error)))
+      .catch((error) =>
+        setError(
+          new LocalCameraError(
+            "Could not get local camera stream",
+            error instanceof Error ? error : undefined,
+          ),
+        ),
+      )
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -39,10 +46,3 @@ function useLocalCamera() {
   return { cameraStream, videoRef, isLoading, error };
 }
 export default useLocalCamera;
-
-function cameraError(error: unknown) {
-  return new LocalCameraError(
-    "Could not get local camera stream",
-    error instanceof Error ? error : undefined,
-  );
-}
