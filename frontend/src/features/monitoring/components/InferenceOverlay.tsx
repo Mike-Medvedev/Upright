@@ -1,5 +1,5 @@
-export function InferenceOverlay({ isConnected }: { isConnected: boolean }) {
-  if (isConnected) return null;
+export function InferenceOverlay({ isLoading }: { isLoading: boolean }) {
+  if (!isLoading) return null;
   return (
     <div
       style={{
