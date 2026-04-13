@@ -10,8 +10,8 @@ const workflowsParameters = {
 const wrtcParams = {
   workspaceName: "gilded-6esmg",
   workflowId: "custom-workflow-5",
-  streamOutputNames: ["output_image"],
-  dataOutputNames: ["posture_height", "status"],
+  streamOutputNames: [],
+  dataOutputNames: ["output"],
   processingTimeout: 3600,
   requestedPlan: "webrtc-gpu-medium",
   requestedRegion: "us",
