@@ -1,13 +1,15 @@
 import { Paper, Text } from "@mantine/core";
 import { useLiveVideoInference } from "@/features/monitoring/hooks/useLiveVideoInference";
 import { InferenceOverlay } from "@/features/monitoring/components/InferenceOverlay";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { InferenceOutputData } from "@/features/monitoring/monitoring.types";
 import { monitoringService } from "@/features/monitoring/service/monitoring.service";
 export function CameraPreview() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isLoading, setLoading] = useState<boolean>(true);
 
   const handlePrediction = (data: InferenceOutputData) => {
+    setLoading(false);
     console.log("Predictions: ", data);
     const predictions = data.serialized_output_data?.output?.predictions?.[0];
     const frame = data.serialized_output_data;
@@ -24,7 +26,7 @@ export function CameraPreview() {
     ctx.fillText(isHealthyPosture ? "Healthy" : "Slouching", 20, 40);
   };
 
-  const { isLoading, error } = useLiveVideoInference({ videoRef, onData: handlePrediction });
+  const { error } = useLiveVideoInference({ videoRef, onData: handlePrediction });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   if (error) return <Text c="red">{error.message}</Text>;

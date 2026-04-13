@@ -10,7 +10,6 @@ interface LiveVideoInterfaceProps {
 
 export function useLiveVideoInference({ videoRef, onData }: LiveVideoInterfaceProps) {
   const { cameraStream } = useLocalCamera();
-  const [isLoading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   const handleData = useEffectEvent(onData); //always uses latest onData and stabilizies it
@@ -27,17 +26,11 @@ export function useLiveVideoInference({ videoRef, onData }: LiveVideoInterfacePr
     }
     let disposed = false;
 
-    inferenceClient
-      .start(cameraStream, handleData)
-      .then(() => {
-        if (!disposed) setLoading(false);
-      })
-      .catch((error) => {
-        if (!disposed) {
-          setError(error);
-          setLoading(false);
-        }
-      });
+    inferenceClient.start(cameraStream, handleData).catch((error) => {
+      if (!disposed) {
+        setError(error);
+      }
+    });
 
     return () => {
       disposed = true;
@@ -45,5 +38,5 @@ export function useLiveVideoInference({ videoRef, onData }: LiveVideoInterfacePr
     };
   }, [cameraStream]);
 
-  return { isLoading, error };
+  return { error };
 }
