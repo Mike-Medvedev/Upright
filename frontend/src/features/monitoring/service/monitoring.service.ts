@@ -3,7 +3,7 @@ import { Buffer } from "./buffer";
 
 export class MonitoringService {
   private readonly buffer: Buffer;
-  private skippedKeypointCount: number = 0;
+  private missingKeyPoints: number = 0;
   private calibratedHeight: number = 150 * 0.8;
   constructor(buffer: Buffer) {
     this.buffer = buffer;
@@ -12,8 +12,8 @@ export class MonitoringService {
   validatePosture(frame: Frame) {
     const keypoints = frame?.output?.predictions?.[0].keypoints;
     if (!keypoints) {
-      this.skippedKeypointCount += 1;
-      return;
+      this.missingKeyPoints += 1;
+      return false;
     }
     this.buffer.push(keypoints);
     return this.buffer.averagePostureHeight > this.calibratedHeight;

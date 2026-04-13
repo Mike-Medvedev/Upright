@@ -1,33 +1,52 @@
 import { Paper, Text } from "@mantine/core";
 import { useLiveVideoInference } from "@/features/monitoring/hooks/useLiveVideoInference";
 import { InferenceOverlay } from "@/features/monitoring/components/InferenceOverlay";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { InferenceOutputData } from "@/features/monitoring/monitoring.types";
 import { monitoringService } from "@/features/monitoring/service/monitoring.service";
+import { CanvasService } from "@/features/monitoring/service/canvas.service";
 export function CameraPreview() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasServiceRef = useRef<CanvasService | null>(null);
   const [isLoading, setLoading] = useState<boolean>(true);
 
   const handlePrediction = (data: InferenceOutputData) => {
     setLoading(false);
     console.log("Predictions: ", data);
-    const predictions = data.serialized_output_data?.output?.predictions?.[0];
+    const predictions = data.serialized_output_data?.output?.predictions[0];
     const frame = data.serialized_output_data;
-    if (!predictions || !frame) return; //skip if model did not make predictions for this frame. THis should be used for validating if user is in frame though
+    if (!predictions || !frame || !predictions.keypoints) return; //skip if model did not make predictions for this frame. THis should be used for validating if user is in frame though
     const isHealthyPosture = monitoringService.validatePosture(frame);
     console.log("Prediction:", data);
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext("2d");
-    if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    ctx.font = "24px Inter";
-    ctx.fillStyle = isHealthyPosture ? "green" : "red";
-    ctx.fillText(isHealthyPosture ? "Healthy" : "Slouching", 20, 40);
+    if (!canvasRef.current || !canvasServiceRef.current) return;
+    canvasServiceRef.current.drawPostureStatus(isHealthyPosture);
+    canvasServiceRef.current.drawEdges(predictions.keypoints);
   };
 
   const { error } = useLiveVideoInference({ videoRef, onData: handlePrediction });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || !videoRef.current) return;
+    if (!canvasServiceRef.current && canvasRef.current) {
+      canvasServiceRef.current = new CanvasService(canvasRef.current);
+    }
+
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+
+    const handleLoaded = () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    };
+
+    video.addEventListener("loadedmetadata", handleLoaded);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", handleLoaded);
+    };
+  }, []);
 
   if (error) return <Text c="red">{error.message}</Text>;
 
