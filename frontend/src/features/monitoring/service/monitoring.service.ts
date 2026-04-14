@@ -1,6 +1,6 @@
 import type { Frame } from "@/features/monitoring/monitoring.types";
 import { Buffer } from "./buffer";
-
+//Todo: Ensure theres only one person in frame
 export class MonitoringService {
   private readonly buffer: Buffer;
   private missingKeyPoints: number = 0;

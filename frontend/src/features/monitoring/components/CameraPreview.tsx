@@ -12,16 +12,56 @@ export function CameraPreview() {
 
   const handlePrediction = (data: InferenceOutputData) => {
     setLoading(false);
-    console.log("Predictions: ", data);
-    const predictions = data.serialized_output_data?.output?.predictions[0];
-    const frame = data.serialized_output_data;
-    if (!predictions || !frame || !predictions.keypoints) return; //skip if model did not make predictions for this frame. THis should be used for validating if user is in frame though
+
+    if (!videoRef.current) return;
+
+    console.log(
+      videoRef.current.videoWidth,
+      videoRef.current.videoHeight,
+      data.serialized_output_data?.output?.image || "NULL IMAGE VALS?",
+    );
+    const scaledData = scaleCoords(data);
+    function scaleCoords(data: InferenceOutputData): InferenceOutputData | null {
+      if (!data) return null;
+      const scaleX = videoRef.current.videoWidth / data.serialized_output_data.output.image.width;
+      const scaleY =
+        videoRef.current.videoHeight / data.serialized_output_data?.output?.image?.height;
+      const scaledPredictions = data.serialized_output_data?.output?.predictions.map(
+        (prediction) => {
+          return {
+            ...prediction,
+            x: prediction.x! * scaleX,
+            y: prediction.y! * scaleY,
+            keypoints: prediction.keypoints!.map((k) => ({
+              ...k,
+              x: k.x * scaleX,
+              y: k.y * scaleY,
+            })),
+          };
+        },
+      );
+      return {
+        ...data,
+        serialized_output_data: {
+          ...data.serialized_output_data,
+          output: {
+            ...data.serialized_output_data.output,
+            predictions: scaledPredictions,
+          },
+        },
+      };
+    }
+    if (!scaledData) return;
+    const frame = scaledData.serialized_output_data;
+    if (!scaledData.serialized_output_data?.output?.predictions[0].keypoints || !frame) return; //skip if model did not make predictions for this frame. THis should be used for validating if user is in frame though
     const isHealthyPosture = monitoringService.validatePosture(frame);
-    console.log("Prediction:", data);
 
     if (!canvasRef.current || !canvasServiceRef.current) return;
+    canvasServiceRef.current.clear();
     canvasServiceRef.current.drawPostureStatus(isHealthyPosture);
-    canvasServiceRef.current.drawEdges(predictions.keypoints);
+    canvasServiceRef.current.drawEdges(
+      scaledData.serialized_output_data.output.predictions[0].keypoints,
+    );
   };
 
   const { error } = useLiveVideoInference({ videoRef, onData: handlePrediction });
@@ -51,20 +91,26 @@ export function CameraPreview() {
   if (error) return <Text c="red">{error.message}</Text>;
 
   return (
-    <Paper
-      w="100%"
-      radius="md"
-      p={0}
-      style={{ aspectRatio: "16/9", overflow: "hidden", position: "relative" }}>
+    <Paper w="100%" radius="md" p={0} style={{ position: "relative" }}>
       <video
         ref={videoRef}
         autoPlay
         muted
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        style={{
+          width: "1280px",
+          height: "720px",
+          display: "block",
+        }}
       />
+
       <canvas
         ref={canvasRef}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "1280px",
+          height: "720px",
+        }}
       />
       <InferenceOverlay isLoading={isLoading} />
     </Paper>

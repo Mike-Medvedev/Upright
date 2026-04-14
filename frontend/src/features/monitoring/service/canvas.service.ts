@@ -13,12 +13,13 @@ export class CanvasService {
     this.ctx = ctx;
 
     this.ctx.clearRect(0, 0, canvas.width, canvas.height);
-    this.ctx.font = "24px Inter";
+  }
+
+  clear() {
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
 
   drawPostureStatus(isHealthyPosture: boolean) {
-    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-
     this.ctx.fillStyle = isHealthyPosture ? "green" : "red";
     this.ctx.fillText(isHealthyPosture ? "Healthy" : "Slouching", 200, 400);
   }
@@ -33,8 +34,12 @@ export class CanvasService {
         rShoulder = k;
       }
     }
+
     if (nose && lShoulder && rShoulder) {
+      this.ctx.font = "24px Inter";
       this.ctx.beginPath();
+      this.ctx.lineWidth = 5; // 👈 increase this (try 3–10)
+      this.ctx.strokeStyle = "red"; // optional but helpful
       this.ctx.moveTo(lShoulder.x, lShoulder.y);
       this.ctx.lineTo(rShoulder.x, rShoulder.y);
       this.ctx.stroke();
