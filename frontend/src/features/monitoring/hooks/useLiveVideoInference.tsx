@@ -2,8 +2,8 @@ import { inferenceClient } from "@/infra/inference.client";
 import { useEffect, useState } from "react";
 import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
 import useCanvas from "./useCanvas";
-import type { InferenceOutputData } from "../monitoring.types";
 import { monitoringService } from "../service/monitoring.service";
+import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 
 export function useLiveVideoInference() {
   const { cameraStream } = useLocalCamera();
@@ -16,19 +16,22 @@ export function useLiveVideoInference() {
       node.srcObject = cameraStream;
       node.addEventListener("loadedmetadata", () => {
         resize(node.videoWidth, node.videoHeight);
+        monitoringService.setDimensions({ width: node.videoWidth, height: node.videoHeight });
       });
     }
   }
 
-  function onData(data: InferenceOutputData): void {
+  function onData(data: WebRTCOutputData): void {
     if (isLoading) setLoading(false);
     const frame = monitoringService.parseFrame(data);
     if (!frame?.output.predictions.length) return;
 
-    const result = monitoringService.process(data);
-    const { isHealthyPosture, shoulderPoints } = result;
-    const { leftShoulderKeypoint, rightShoulderKeypoint } = shoulderPoints;
     const { width, height } = getCanvasDimensions();
+
+    const {
+      isHealthyPosture,
+      keypoints: { lShoulder, rShoulder },
+    } = monitoringService.process(frame);
 
     reset();
     drawText({
@@ -36,8 +39,8 @@ export function useLiveVideoInference() {
       point: { x: width * 0.1, y: height * 0.1 }, // 10% from top left
     });
     drawEdge({
-      point1: leftShoulderKeypoint,
-      point2: rightShoulderKeypoint,
+      point1: { x: lShoulder.x, y: lShoulder.y },
+      point2: { x: rShoulder.x, y: rShoulder.y },
     });
   }
 

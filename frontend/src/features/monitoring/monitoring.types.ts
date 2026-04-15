@@ -6,6 +6,21 @@ export interface Keypoint {
   y: number;
 }
 
+export interface ValidationData {
+  isHealthyPosture: boolean;
+  keypoints: ValidKeypoints;
+}
+
+export type ValidKeypoint = Keypoint & {
+  class: "nose" | "left_shoulder" | "right_shoulder";
+};
+
+export type ValidKeypoints = {
+  nose: ValidKeypoint;
+  lShoulder: ValidKeypoint;
+  rShoulder: ValidKeypoint;
+};
+
 export interface Prediction {
   width?: number;
   height?: number;
@@ -22,9 +37,15 @@ export interface Prediction {
 export type Frame = {
   output: {
     image: {
-      width: number | null;
-      height: number | null;
+      width: number;
+      height: number;
     };
     predictions: Prediction[];
+  };
+};
+
+export type ValidatedFrame = Frame & {
+  output: {
+    predictions: [{ keypoints: Keypoint[] }];
   };
 };
