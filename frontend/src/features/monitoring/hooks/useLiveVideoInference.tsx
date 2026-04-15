@@ -8,17 +8,21 @@ interface LiveVideoInterfaceProps {
   onData: (data: InferenceOutputData) => void;
 }
 
-export function useLiveVideoInference({ videoRef, onData }: LiveVideoInterfaceProps) {
+export function useLiveVideoInference({ onData }: LiveVideoInterfaceProps) {
   const { cameraStream } = useLocalCamera();
   const [error, setError] = useState<Error | null>(null);
 
   const handleData = useEffectEvent(onData); //always uses latest onData and stabilizies it
 
-  useEffect(() => {
-    if (videoRef.current && cameraStream) {
-      videoRef.current.srcObject = cameraStream;
+  function videoRef(node: HTMLVideoElement | null) {
+    if (node) {
+      node.srcObject = cameraStream;
+      node.addEventListener("loadedmetadata", () => {
+        canvas.width = node.videoWidth;
+        canvas.height = node.videoHeight;
+      });
     }
-  }, [cameraStream, videoRef]);
+  }
 
   useEffect(() => {
     if (!cameraStream) {
@@ -38,5 +42,5 @@ export function useLiveVideoInference({ videoRef, onData }: LiveVideoInterfacePr
     };
   }, [cameraStream]);
 
-  return { error };
+  return { videoRef, error };
 }

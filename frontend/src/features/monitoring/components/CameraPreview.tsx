@@ -4,16 +4,14 @@ import { InferenceOverlay } from "@/features/monitoring/components/InferenceOver
 import { useEffect, useRef, useState } from "react";
 import type { InferenceOutputData } from "@/features/monitoring/monitoring.types";
 import { monitoringService } from "@/features/monitoring/service/monitoring.service";
-import { CanvasService } from "@/features/monitoring/service/canvas.service";
+import useCanvas from "@/features/monitoring/hooks/useCanvas";
 export function CameraPreview() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasServiceRef = useRef<CanvasService | null>(null);
+  const { canvasRef, drawKeypoints, drawPostureStatus, reset } = useCanvas();
+  const { videoRef, error } = useLiveVideoInference({ onData: handlePrediction });
   const [isLoading, setLoading] = useState<boolean>(true);
 
   const handlePrediction = (data: InferenceOutputData) => {
     setLoading(false);
-
-    if (!videoRef.current) return;
 
     console.log(
       videoRef.current.videoWidth,
@@ -57,23 +55,14 @@ export function CameraPreview() {
     const isHealthyPosture = monitoringService.validatePosture(frame);
 
     if (!canvasRef.current || !canvasServiceRef.current) return;
-    canvasServiceRef.current.clear();
-    canvasServiceRef.current.drawPostureStatus(isHealthyPosture);
-    canvasServiceRef.current.drawEdges(
-      scaledData.serialized_output_data.output.predictions[0].keypoints,
-    );
+    reset();
+    drawPostureStatus(isHealthyPosture);
+    drawKeypoints(scaledData.serialized_output_data.output.predictions[0].keypoints);
   };
-
-  const { error } = useLiveVideoInference({ videoRef, onData: handlePrediction });
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current || !videoRef.current) return;
-    if (!canvasServiceRef.current && canvasRef.current) {
-      canvasServiceRef.current = new CanvasService(canvasRef.current);
-    }
 
-    const canvas = canvasRef.current;
     const video = videoRef.current;
 
     const handleLoaded = () => {
@@ -91,26 +80,16 @@ export function CameraPreview() {
   if (error) return <Text c="red">{error.message}</Text>;
 
   return (
-    <Paper w="100%" radius="md" p={0} style={{ position: "relative" }}>
+    <Paper w="100%" radius="md" p={0} style={{ overflow: "hidden", position: "relative" }}>
       <video
         ref={videoRef}
         autoPlay
         muted
-        style={{
-          width: "1280px",
-          height: "720px",
-          display: "block",
-        }}
+        style={{ width: "100%", height: "100%", display: "block" }}
       />
-
       <canvas
         ref={canvasRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "1280px",
-          height: "720px",
-        }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
       />
       <InferenceOverlay isLoading={isLoading} />
     </Paper>

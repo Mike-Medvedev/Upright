@@ -5,17 +5,14 @@ export class CanvasService {
 
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext("2d");
-
     if (!ctx) {
       throw new Error("Failed to get 2D context from canvas");
     }
-
     this.ctx = ctx;
-
-    this.ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
-  clear() {
+  reset() {
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
 
@@ -38,8 +35,8 @@ export class CanvasService {
     if (nose && lShoulder && rShoulder) {
       this.ctx.font = "24px Inter";
       this.ctx.beginPath();
-      this.ctx.lineWidth = 5; // 👈 increase this (try 3–10)
-      this.ctx.strokeStyle = "red"; // optional but helpful
+      this.ctx.lineWidth = 5;
+      this.ctx.strokeStyle = "red";
       this.ctx.moveTo(lShoulder.x, lShoulder.y);
       this.ctx.lineTo(rShoulder.x, rShoulder.y);
       this.ctx.stroke();
