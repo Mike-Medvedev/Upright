@@ -1,5 +1,3 @@
-import type { WebRTCOutputData } from "@roboflow/inference-sdk";
-
 export interface Keypoint {
   class_id: number;
   class: string;
@@ -21,15 +19,11 @@ export interface Prediction {
   keypoints?: Keypoint[];
 }
 
-export type InferenceOutputData = Omit<WebRTCOutputData, "serialized_output_data"> & {
-  serialized_output_data?: Frame | null;
-};
-
 export type Frame = {
-  output?: {
-    image?: {
-      width?: number;
-      height?: number;
+  output: {
+    image: {
+      width: number | null;
+      height: number | null;
     };
     predictions: Prediction[];
   };

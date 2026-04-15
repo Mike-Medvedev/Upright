@@ -1,27 +1,44 @@
 import { inferenceClient } from "@/infra/inference.client";
-import { useEffect, useEffectEvent, useState } from "react";
-import type { InferenceOutputData } from "@/features/monitoring/monitoring.types";
+import { useEffect, useState } from "react";
 import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
+import useCanvas from "./useCanvas";
+import type { InferenceOutputData } from "../monitoring.types";
+import { monitoringService } from "../service/monitoring.service";
 
-interface LiveVideoInterfaceProps {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  onData: (data: InferenceOutputData) => void;
-}
-
-export function useLiveVideoInference({ onData }: LiveVideoInterfaceProps) {
+export function useLiveVideoInference() {
   const { cameraStream } = useLocalCamera();
+  const { canvasRef, drawText, drawEdge, reset, resize, getCanvasDimensions } = useCanvas();
+  const [isLoading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-
-  const handleData = useEffectEvent(onData); //always uses latest onData and stabilizies it
 
   function videoRef(node: HTMLVideoElement | null) {
     if (node) {
       node.srcObject = cameraStream;
       node.addEventListener("loadedmetadata", () => {
-        canvas.width = node.videoWidth;
-        canvas.height = node.videoHeight;
+        resize(node.videoWidth, node.videoHeight);
       });
     }
+  }
+
+  function onData(data: InferenceOutputData): void {
+    if (isLoading) setLoading(false);
+    const frame = monitoringService.parseFrame(data);
+    if (!frame?.output.predictions.length) return;
+
+    const result = monitoringService.process(data);
+    const { isHealthyPosture, shoulderPoints } = result;
+    const { leftShoulderKeypoint, rightShoulderKeypoint } = shoulderPoints;
+    const { width, height } = getCanvasDimensions();
+
+    reset();
+    drawText({
+      text: isHealthyPosture ? "Healthy" : "Unhealthy",
+      point: { x: width * 0.1, y: height * 0.1 }, // 10% from top left
+    });
+    drawEdge({
+      point1: leftShoulderKeypoint,
+      point2: rightShoulderKeypoint,
+    });
   }
 
   useEffect(() => {
@@ -30,7 +47,7 @@ export function useLiveVideoInference({ onData }: LiveVideoInterfaceProps) {
     }
     let disposed = false;
 
-    inferenceClient.start(cameraStream, handleData).catch((error) => {
+    inferenceClient.start(cameraStream, onData).catch((error) => {
       if (!disposed) {
         setError(error);
       }
@@ -42,5 +59,5 @@ export function useLiveVideoInference({ onData }: LiveVideoInterfaceProps) {
     };
   }, [cameraStream]);
 
-  return { videoRef, error };
+  return { videoRef, canvasRef, isLoading, error };
 }
