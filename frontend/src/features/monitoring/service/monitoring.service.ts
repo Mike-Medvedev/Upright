@@ -23,7 +23,9 @@ export class MonitoringService {
 
   parseFrame(
     data: WebRTCOutputData,
-  ): { frame: ValidatedFrame; error: null } | { frame: null; error: InferenceError } {
+  ):
+    | { validatedFrame: ValidatedFrame; error: null }
+    | { validatedFrame: null; error: InferenceError } {
     const raw = data.serialized_output_data as Frame;
 
     // Verify the structural hierarchy exists
@@ -31,39 +33,45 @@ export class MonitoringService {
 
     // Specifically check if the first prediction has the keypoints array
     if (!hasPredictions || !raw.output.predictions[0].keypoints) {
-      return { frame: null, error: new InferenceError("MISSING_KEYPOINTS") };
+      return { validatedFrame: null, error: new InferenceError("MISSING_KEYPOINTS") };
     }
 
     if (!raw.output.image?.width || !raw.output.image?.height) {
-      return { frame: null, error: new InferenceError("MISSING_PREDICTION_IMAGE_DIMENSIONS") };
+      return {
+        validatedFrame: null,
+        error: new InferenceError("MISSING_PREDICTION_IMAGE_DIMENSIONS"),
+      };
     }
 
-    return { frame: raw as ValidatedFrame, error: null };
+    return { validatedFrame: raw as ValidatedFrame, error: null };
   }
 
   setDimensions(dimensions: { width: number; height: number }) {
     this.videoDimensions = dimensions;
   }
-  process(frame: ValidatedFrame): ValidationData {
+  process(
+    frame: ValidatedFrame,
+  ): { data: ValidationData; error: null } | { data: null; error: InferenceError } {
     console.log(frame);
 
     const scaledFrame = this.scaleFrame(frame);
-    const keypoints = scaledFrame.output.predictions[0].keypoints;
-    const { nose, lShoulder, rShoulder } = this.extractKeypoints(keypoints);
+    const rawKeypoints = scaledFrame.output.predictions[0].keypoints;
 
-    const isHealthyPosture = this.validatePosture({ nose, lShoulder, rShoulder });
+    const keypoints = this.extractKeypoints(rawKeypoints);
+
+    if (keypoints instanceof InferenceError) {
+      return { data: null, error: keypoints };
+    }
+
+    const isHealthyPosture = this.validatePosture(keypoints);
 
     return {
-      isHealthyPosture,
-      keypoints: {
-        nose,
-        lShoulder,
-        rShoulder,
-      },
+      data: { isHealthyPosture, keypoints },
+      error: null,
     };
   }
 
-  private extractKeypoints(keypoints: Keypoint[]): ValidKeypoints {
+  private extractKeypoints(keypoints: Keypoint[]): ValidKeypoints | InferenceError {
     let nose: ValidKeypoint | null = null;
     let lShoulder: ValidKeypoint | null = null;
     let rShoulder: ValidKeypoint | null = null;
@@ -76,9 +84,9 @@ export class MonitoringService {
         rShoulder = k as ValidKeypoint;
       }
     }
-    if (!nose) throw new InferenceError("MISSING_NOSE_KEYPOINT");
-    if (!lShoulder) throw new InferenceError("MISSING_LSHOULDER_KEYPOINT");
-    if (!rShoulder) throw new InferenceError("MISSING_RSHOULDER_KEYPOINT");
+    if (!nose) return new InferenceError("MISSING_NOSE_KEYPOINT");
+    if (!lShoulder) return new InferenceError("MISSING_LSHOULDER_KEYPOINT");
+    if (!rShoulder) return new InferenceError("MISSING_RSHOULDER_KEYPOINT");
     return { nose, lShoulder, rShoulder };
   }
 

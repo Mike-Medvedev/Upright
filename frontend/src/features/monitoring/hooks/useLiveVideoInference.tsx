@@ -25,13 +25,13 @@ export function useLiveVideoInference() {
   const onData = useEffectEvent((data: WebRTCOutputData): void => {
     const { width, height } = getCanvasDimensions();
     if (isLoading) setLoading(false);
-    const { frame, error } = monitoringService.parseFrame(data);
+    const { validatedFrame, error } = monitoringService.parseFrame(data);
     if (error instanceof InferenceError) {
       if (error.code === "MISSING_KEYPOINTS") {
         drawText({
           text: "Please make sure both shoulders and head are in frame!",
           point: { x: width * 0.8, y: height * 0.8 },
-          color: "blue",
+          color: "red",
         });
       }
       if (error.code === "MISSING_PREDICTION_IMAGE_DIMENSIONS") {
@@ -39,17 +39,45 @@ export function useLiveVideoInference() {
         return;
       }
     }
-    if (!frame?.output.predictions.length) return;
+    if (!validatedFrame?.output.predictions.length) return;
 
-    const {
-      isHealthyPosture,
-      keypoints: { lShoulder, rShoulder },
-    } = monitoringService.process(frame);
-
+    const { data: postureData, error: postureError } = monitoringService.process(validatedFrame);
+    if (error && !postureData) {
+      if (postureError instanceof InferenceError) {
+        switch (postureError.code) {
+          case "MISSING_NOSE_KEYPOINT":
+            drawText({
+              text: "Please make sure Nose is in frame!",
+              point: { x: width * 0.8, y: height * 0.8 },
+              color: "red",
+            });
+            break;
+          case "MISSING_LSHOULDER_KEYPOINT":
+            drawText({
+              text: "Please make sure Left shoulder is in frame!",
+              point: { x: width * 0.8, y: height * 0.8 },
+              color: "red",
+            });
+            break;
+          case "MISSING_RSHOULDER_KEYPOINT":
+            drawText({
+              text: "Please make sure Right Shoulder is in frame!",
+              point: { x: width * 0.8, y: height * 0.8 },
+              color: "red",
+            });
+            break;
+          default:
+            break;
+        }
+        return;
+      }
+    }
+    if (!postureData) return;
+    const { lShoulder, rShoulder } = postureData.keypoints;
     reset();
     drawText({
-      text: isHealthyPosture ? "Healthy" : "Unhealthy",
-      color: isHealthyPosture ? "green" : "red",
+      text: postureData.isHealthyPosture ? "Healthy" : "Unhealthy",
+      color: postureData.isHealthyPosture ? "green" : "red",
       point: { x: width * 0.1, y: height * 0.1 }, // 10% from top left
     });
     drawEdge({
