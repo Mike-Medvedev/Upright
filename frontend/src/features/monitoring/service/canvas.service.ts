@@ -32,7 +32,7 @@ export class CanvasService {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
-  drawText({ text, point, color = "red", font = "24px Inter" }: CanvasTextProps) {
+  drawText({ text, point, color = "red", font = "52px Inter" }: CanvasTextProps) {
     this.ctx.font = font;
     if (color) this.ctx.fillStyle = color;
     this.ctx.fillText(text, point.x, point.y);

@@ -21,7 +21,9 @@ export class MonitoringService {
     this.buffer = buffer;
   }
 
-  parseFrame(data: WebRTCOutputData): ValidatedFrame {
+  parseFrame(
+    data: WebRTCOutputData,
+  ): { frame: ValidatedFrame; error: null } | { frame: null; error: InferenceError } {
     const raw = data.serialized_output_data as Frame;
 
     // Verify the structural hierarchy exists
@@ -29,14 +31,14 @@ export class MonitoringService {
 
     // Specifically check if the first prediction has the keypoints array
     if (!hasPredictions || !raw.output.predictions[0].keypoints) {
-      throw new InferenceError("MISSING_KEYPOINTS");
+      return { frame: null, error: new InferenceError("MISSING_KEYPOINTS") };
     }
 
     if (!raw.output.image?.width || !raw.output.image?.height) {
-      throw new InferenceError("MISSING_PREDICTION_IMAGE_DIMENSIONS");
+      return { frame: null, error: new InferenceError("MISSING_PREDICTION_IMAGE_DIMENSIONS") };
     }
 
-    return raw as ValidatedFrame;
+    return { frame: raw as ValidatedFrame, error: null };
   }
 
   setDimensions(dimensions: { width: number; height: number }) {

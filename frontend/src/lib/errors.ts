@@ -1,8 +1,8 @@
-export class ApplicationError extends Error {
-  public readonly code: string;
+export class ApplicationError<T extends string = string> extends Error {
+  public readonly code: T;
   public readonly details?: Record<string, unknown>;
 
-  constructor(message: string, code: string, details?: Record<string, unknown>, cause?: unknown) {
+  constructor(message: string, code: T, details?: Record<string, unknown>, cause?: unknown) {
     super(message, { cause });
     this.name = new.target.name;
     this.code = code;
@@ -41,7 +41,7 @@ export class LocalCameraError extends ApplicationError {
   }
 }
 
-export class InferenceError extends ApplicationError {
+export class InferenceError extends ApplicationError<INFERENCE_ERROR_CODES> {
   constructor(code: INFERENCE_ERROR_CODES) {
     super(code, code);
   }
