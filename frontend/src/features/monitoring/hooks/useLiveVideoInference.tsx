@@ -14,6 +14,7 @@ export function useLiveVideoInference(isActive: boolean) {
   const [error, setError] = useState<Error | null>(null);
   const [calibrationProgress, setProgress] = useState<number>(0);
   const [isCalibrating, setCalibrating] = useState<boolean>(false);
+  const [isHealthyPosture, setHealthyPosture] = useState<boolean | null>(null);
 
   const videoRef = useCallback(
     (node: HTMLVideoElement | null) => {
@@ -87,11 +88,7 @@ export function useLiveVideoInference(isActive: boolean) {
     }
     if (calibrationData != null) {
       reset();
-      drawText({
-        text: `Calibrating… ${calibrationData.progress}%`,
-        color: "blue",
-        point: { x: 15, y: 200 },
-      });
+      setHealthyPosture(null);
       if (calibrationData.isComplete) {
         setProgress(100);
         setCalibrating(false);
@@ -102,6 +99,7 @@ export function useLiveVideoInference(isActive: boolean) {
     }
     if (!postureData) return;
     const { lShoulder, rShoulder } = postureData.keypoints;
+    setHealthyPosture(postureData.isHealthyPosture);
     reset();
     drawText({
       text: postureData.isHealthyPosture ? "Healthy" : "Unhealthy",
@@ -135,6 +133,7 @@ export function useLiveVideoInference(isActive: boolean) {
       setError(null);
       setProgress(0);
       setCalibrating(false);
+      setHealthyPosture(null);
       reset();
     };
   }, [cameraStream, isActive, reset]);
@@ -165,6 +164,7 @@ export function useLiveVideoInference(isActive: boolean) {
     canvasRef,
     calibrationProgress,
     error: combinedError,
+    isHealthyPosture,
     isCalibrating,
     startCalibration,
     status,

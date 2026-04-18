@@ -1,13 +1,11 @@
-import { Loader, Progress, Stack, Text } from "@mantine/core";
+import { Loader, Stack, Text } from "@mantine/core";
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
 
 export default function InferenceOverlay({
   status,
-  calibrationProgress,
   errorMessage,
 }: {
   status: MonitoringSessionStatus;
-  calibrationProgress: number;
   errorMessage: string | null;
 }) {
   if (status === "connecting") {
@@ -37,21 +35,5 @@ export default function InferenceOverlay({
     );
   }
 
-  if (status !== "calibrating") {
-    return null;
-  }
-
-  return (
-    <div aria-live="polite" className="monitoringCalibrationBanner">
-      <Stack gap="xs">
-        <Text fw={600} size="sm">
-          Calibrating…
-        </Text>
-        <Text c="dimmed" size="xs">
-          Sit naturally and keep your shoulders visible for a few seconds.
-        </Text>
-        <Progress color="grape" radius="xl" size="sm" value={calibrationProgress} />
-      </Stack>
-    </div>
-  );
+  return null;
 }

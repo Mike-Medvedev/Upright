@@ -1,8 +1,8 @@
 import { AppShell, Avatar, Box, Group, Loader, Menu, NavLink, Stack, Text, Title } from "@mantine/core";
 import { IconChartBar, IconSettings, IconVideo } from "@tabler/icons-react";
 import { useState } from "react";
-import { useMonitoring } from "@/features/monitoring/monitoring.context";
-import { MonitoringProvider } from "@/features/monitoring/monitoring.provider";
+import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
+import { MonitoringProvider } from "@/features/monitoring/context/monitoring.provider";
 import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/infra/auth/auth.context";
 import { AppLogo } from "@/theme/components/AppLogo/AppLogo";

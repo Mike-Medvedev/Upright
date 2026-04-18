@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { MonitoringContext } from "@/features/monitoring/monitoring.context";
+import { MonitoringContext } from "@/features/monitoring/context/monitoring.context";
 import type { MonitoringContextValue, MonitoringUiState } from "@/features/monitoring/monitoring.types";
 
 const initialState: MonitoringUiState = {

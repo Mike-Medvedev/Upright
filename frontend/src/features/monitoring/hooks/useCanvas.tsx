@@ -54,29 +54,3 @@ export default function useCanvas() {
     getCanvasDimensions,
   };
 }
-
-// drawPostureStatus(isHealthyPosture: boolean) {
-//     this.ctx.fillStyle = isHealthyPosture ? "green" : "red";
-//     this.ctx.fillText(isHealthyPosture ? "Healthy" : "Slouching", 200, 400);
-//   }
-//   drawEdges(keypoints: Keypoint[]) {
-//     let nose, lShoulder, rShoulder;
-//     for (const k of keypoints) {
-//       if (k.class === "nose") {
-//         nose = k;
-//       } else if (k.class === "left_shoulder") {
-//         lShoulder = k;
-//       } else if (k.class === "right_shoulder") {
-//         rShoulder = k;
-//       }
-//     }
-
-//     if (nose && lShoulder && rShoulder) {
-//       this.ctx.beginPath();
-//       this.ctx.lineWidth = 5;
-//       this.ctx.strokeStyle = "red";
-//       this.ctx.moveTo(lShoulder.x, lShoulder.y);
-//       this.ctx.lineTo(rShoulder.x, rShoulder.y);
-//       this.ctx.stroke();
-//     }
-//   }
