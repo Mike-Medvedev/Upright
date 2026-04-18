@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import {
   CanvasService,
   type CanvasEdgeProps,
@@ -19,12 +19,12 @@ export default function useCanvas() {
     };
   }
 
-  function resize(width: number, height: number) {
+  const resize = useCallback((width: number, height: number) => {
     if (canvasNodeRef.current) {
       canvasNodeRef.current.width = width;
       canvasNodeRef.current.height = height;
     }
-  }
+  }, []);
 
   function getCanvasDimensions() {
     return {

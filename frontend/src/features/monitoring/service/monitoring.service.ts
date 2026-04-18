@@ -7,18 +7,21 @@ import type {
   ValidKeypoint,
   ValidKeypoints,
 } from "@/features/monitoring/monitoring.types";
-import { Buffer } from "./buffer";
+import { SlidingWindowBuffer, CalibrationBuffer } from "@/features/monitoring/service/buffer";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
 
 //Todo: Ensure theres only one person in frame
 export class MonitoringService {
-  private readonly buffer: Buffer;
+  private readonly buffer: SlidingWindowBuffer;
+  private calibrationBuffer: CalibrationBuffer;
   private videoDimensions: { width: number; height: number } = { width: 0, height: 0 };
   private calibratedHeight: number = 150 * 0.8;
+  private _isCalibrating: boolean = false;
 
-  constructor(buffer: Buffer) {
-    this.buffer = buffer;
+  constructor() {
+    this.buffer = new SlidingWindowBuffer();
+    this.calibrationBuffer = new CalibrationBuffer(600);
   }
 
   parseFrame(
@@ -51,27 +54,58 @@ export class MonitoringService {
   }
   process(
     frame: ValidatedFrame,
-  ): { data: ValidationData; error: null } | { data: null; error: InferenceError } {
-    console.log(frame);
-
+  ):
+    | { data: ValidationData; error: null; calibration: null }
+    | { data: null; error: InferenceError; calibration: null }
+    | { data: null; error: null; calibration: { progress: number; isComplete: boolean } } {
     const scaledFrame = this.scaleFrame(frame);
     const rawKeypoints = scaledFrame.output.predictions[0].keypoints;
+    const { keypoints, error } = this.extractKeypoints(rawKeypoints);
 
-    const keypoints = this.extractKeypoints(rawKeypoints);
+    if (error) return { data: null, error, calibration: null };
 
-    if (keypoints instanceof InferenceError) {
-      return { data: null, error: keypoints };
+    if (this._isCalibrating) {
+      this.calibrationBuffer.push(keypoints);
+
+      if (this.calibrationBuffer.isFull) {
+        this.calibratedHeight = this.calibrationBuffer.calibratedHeight;
+        this._isCalibrating = false;
+      }
+
+      return {
+        data: null,
+        error: null,
+        calibration: {
+          progress: this.calibrationBuffer.progress,
+          isComplete: this.calibrationBuffer.isFull,
+        },
+      };
     }
 
     const isHealthyPosture = this.validatePosture(keypoints);
-
-    return {
-      data: { isHealthyPosture, keypoints },
-      error: null,
-    };
+    return { data: { isHealthyPosture, keypoints }, error: null, calibration: null };
   }
 
-  private extractKeypoints(keypoints: Keypoint[]): ValidKeypoints | InferenceError {
+  get progress() {
+    return this.calibrationBuffer.progress;
+  }
+
+  get isCalibrating(): boolean {
+    return this._isCalibrating;
+  }
+  set isCalibrating(status: boolean) {
+    this._isCalibrating = status;
+  }
+
+  startCalibration() {
+    // reset buffer by creating a fresh one
+    this.calibrationBuffer = new CalibrationBuffer(600);
+    this._isCalibrating = true;
+  }
+
+  private extractKeypoints(
+    keypoints: Keypoint[],
+  ): { keypoints: ValidKeypoints; error: null } | { keypoints: null; error: InferenceError } {
     let nose: ValidKeypoint | null = null;
     let lShoulder: ValidKeypoint | null = null;
     let rShoulder: ValidKeypoint | null = null;
@@ -84,22 +118,17 @@ export class MonitoringService {
         rShoulder = k as ValidKeypoint;
       }
     }
-    if (!nose) return new InferenceError("MISSING_NOSE_KEYPOINT");
-    if (!lShoulder) return new InferenceError("MISSING_LSHOULDER_KEYPOINT");
-    if (!rShoulder) return new InferenceError("MISSING_RSHOULDER_KEYPOINT");
-    return { nose, lShoulder, rShoulder };
+    if (!nose) return { keypoints: null, error: new InferenceError("MISSING_NOSE_KEYPOINT") };
+    if (!lShoulder)
+      return { keypoints: null, error: new InferenceError("MISSING_LSHOULDER_KEYPOINT") };
+    if (!rShoulder)
+      return { keypoints: null, error: new InferenceError("MISSING_RSHOULDER_KEYPOINT") };
+    return { keypoints: { nose, lShoulder, rShoulder }, error: null };
   }
 
   private validatePosture(keypoints: ValidKeypoints) {
     this.buffer.push(keypoints);
     return this.buffer.averagePostureHeight > this.calibratedHeight;
-  }
-
-  set calibrate(calibratedHeight: number) {
-    this.calibratedHeight = calibratedHeight;
-  }
-  get calibrate() {
-    return this.calibratedHeight;
   }
 
   private scaleFrame(frame: ValidatedFrame): ValidatedFrame {
@@ -128,6 +157,4 @@ export class MonitoringService {
   }
 }
 
-const buffer = new Buffer();
-
-export const monitoringService = new MonitoringService(buffer);
+export const monitoringService = new MonitoringService();

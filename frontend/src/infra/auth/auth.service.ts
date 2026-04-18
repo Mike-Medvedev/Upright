@@ -6,7 +6,12 @@ import {
   ValidationError,
   type ApplicationError,
 } from "@/lib/errors";
-import type { AuthSignUpResult, LoginValues, OAuthProvider, SignUpValues } from "@/features/auth/auth.types";
+import type {
+  AuthSignUpResult,
+  LoginValues,
+  OAuthProvider,
+  SignUpValues,
+} from "@/features/auth/auth.types";
 import { loginSchema, signUpSchema } from "@/features/auth/auth.types";
 
 const OAUTH_CALLBACK_PATH = "/auth/callback";
@@ -49,14 +54,15 @@ export function getSignUpResult(email: string, hasSession: boolean): AuthSignUpR
   };
 }
 
-export function toApplicationError(
-  error: unknown,
-  fallbackMessage: string,
-): ApplicationError {
+export function toApplicationError(error: unknown, fallbackMessage: string): ApplicationError {
   if (error instanceof z.ZodError) {
-    return new ValidationError("The submitted authentication data is invalid.", {
-      issues: error.flatten(),
-    }, error);
+    return new ValidationError(
+      "The submitted authentication data is invalid.",
+      {
+        issues: z.treeifyError(error),
+      },
+      error,
+    );
   }
 
   if (error instanceof SupabaseAuthError) {
