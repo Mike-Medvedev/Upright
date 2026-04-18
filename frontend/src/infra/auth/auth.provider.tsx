@@ -58,10 +58,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const api: AuthContextValue = {
     createUser: async (credentials) => {
       try {
-        const parsedCredentials = parseSignUpCredentials(credentials);
-        const { confirmPassword: _confirmPassword, ...signUpCredentials } = parsedCredentials;
+        const { email, password } = parseSignUpCredentials(credentials);
         const { data, error } = await supabase.auth.signUp({
-          ...signUpCredentials,
+          email,
+          password,
           options: getSignUpRedirectOptions(),
         });
 
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw error;
         }
 
-        return getSignUpResult(signUpCredentials.email, Boolean(data.session));
+        return getSignUpResult(email, Boolean(data.session));
       } catch (error) {
         throw toApplicationError(error, "Unable to create your account.");
       }

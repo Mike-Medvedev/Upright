@@ -1,5 +1,5 @@
 import { connectors, webrtc, type WebRTCOutputData } from "@roboflow/inference-sdk";
-
+import { settings } from "@/settings";
 const workflowsParameters = {
   is_calibrating: false,
   baseline_height: 100,
@@ -8,8 +8,8 @@ const workflowsParameters = {
 
 //SubStep2. Configure web rtc connection paramters
 const wrtcParams = {
-  workspaceName: "gilded-6esmg",
-  workflowId: "custom-workflow-5",
+  workspaceName: settings.roboflowWorkspaceName,
+  workflowId: settings.roboflowWorkspaceId,
   streamOutputNames: [],
   dataOutputNames: ["output"],
   processingTimeout: 3600,

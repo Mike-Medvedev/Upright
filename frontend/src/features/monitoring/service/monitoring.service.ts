@@ -7,7 +7,7 @@ import type {
   ValidKeypoint,
   ValidKeypoints,
 } from "@/features/monitoring/monitoring.types";
-import { SlidingWindowBuffer, CalibrationBuffer } from "@/features/monitoring/service/buffer";
+import { SlidingWindowBuffer, CalibrationBuffer } from "@/features/monitoring/service/Buffer";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
 

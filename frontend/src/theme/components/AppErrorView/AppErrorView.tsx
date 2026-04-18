@@ -31,10 +31,6 @@ function getTitle(error: unknown) {
     return "Page not found";
   }
 
-  if (error instanceof ApplicationError) {
-    return error.statusCode >= 500 ? "Something went wrong" : "We hit a problem";
-  }
-
   return "Something went wrong";
 }
 
