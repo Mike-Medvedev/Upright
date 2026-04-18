@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "npx tsx --watch src/server.ts",
     "build": "esbuild src/server.ts --bundle --platform=node --format=esm  --packages=external --outfile=dist/main.js",
-    "docker:build": "docker build -t medvedevil/upright-backend .",
-    "docker:run": "docker run --env-file .env"
+    "docker:build": "docker buildx build --platform linux/amd64 -t medvedevil/upright-backend .",
+    "docker:run": "docker run --env-file .env -p 3000:3000 medvedevil/upright-backend:latest",
+    "docker:push": "docker push medvedevil/upright-backend:latest"
   },
   "keywords": [],
   "engines": {
@@ -26,11 +27,11 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "meebo": "^0.7.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "dotenv": "^17.4.1"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
-    "dotenv": "^17.4.1",
     "esbuild": "0.28.0",
     "tsx": "^4.21.0"
   }
