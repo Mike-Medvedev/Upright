@@ -41,10 +41,6 @@ jobs:
           username: medvedvil
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Compute image tag
-        id: image
-        run: echo "image=${{ env.IMAGE_NAME }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
@@ -57,9 +53,7 @@ jobs:
             VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY }}
             VITE_ROBOFLOW_WORKSPACE_NAME=${{ secrets.VITE_ROBOFLOW_WORKSPACE_NAME }}
             VITE_ROBOFLOW_WORKFLOW_ID=${{ secrets.VITE_ROBOFLOW_WORKFLOW_ID }}
-          tags: |
-            ${{ steps.image.outputs.image }}
-            ${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.IMAGE_NAME }}:latest
 
       - name: Install Azure Container Apps extension
         run: az extension add --name containerapp --upgrade
@@ -69,4 +63,4 @@ jobs:
           az containerapp update
           --name "${{ vars.AZURE_FRONTEND_CONTAINER_APP_NAME }}"
           --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}"
-          --image "${{ steps.image.outputs.image }}"
+          --image "${{ env.IMAGE_NAME }}:latest"
