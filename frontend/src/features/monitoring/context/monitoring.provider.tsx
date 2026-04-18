@@ -1,6 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { MonitoringContext } from "@/features/monitoring/context/monitoring.context";
-import type { MonitoringContextValue, MonitoringUiState } from "@/features/monitoring/monitoring.types";
+import { monitoringAlertsService } from "@/features/monitoring/service/monitoring-alerts.service";
+import type {
+  MonitoringAlertPreferences,
+  MonitoringContextValue,
+  MonitoringUiState,
+} from "@/features/monitoring/monitoring.types";
 
 const initialState: MonitoringUiState = {
   isCameraActive: false,
@@ -11,6 +16,9 @@ const initialState: MonitoringUiState = {
 
 export function MonitoringProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<MonitoringUiState>(initialState);
+  const [alertPreferences, setAlertPreferences] = useState<MonitoringAlertPreferences>(() =>
+    monitoringAlertsService.loadPreferences(),
+  );
 
   const startCamera = useCallback(() => {
     setState({
@@ -19,7 +27,15 @@ export function MonitoringProvider({ children }: { children: React.ReactNode }) 
       calibrationProgress: 0,
       errorMessage: null,
     });
-  }, []);
+
+    if (alertPreferences.soundEnabled) {
+      monitoringAlertsService.primeVoiceAlert();
+    }
+
+    if (alertPreferences.desktopNotificationsEnabled) {
+      void monitoringAlertsService.requestDesktopNotificationPermission();
+    }
+  }, [alertPreferences.desktopNotificationsEnabled, alertPreferences.soundEnabled]);
 
   const stopCamera = useCallback(() => {
     setState(initialState);
@@ -49,15 +65,37 @@ export function MonitoringProvider({ children }: { children: React.ReactNode }) 
     setState(initialState);
   }, []);
 
+  const updateAlertPreferences = useCallback((nextState: Partial<MonitoringAlertPreferences>) => {
+    setAlertPreferences((currentPreferences) => {
+      const nextPreferences = {
+        ...currentPreferences,
+        ...nextState,
+      };
+
+      if (
+        nextPreferences.desktopNotificationsEnabled === currentPreferences.desktopNotificationsEnabled &&
+        nextPreferences.soundEnabled === currentPreferences.soundEnabled
+      ) {
+        return currentPreferences;
+      }
+
+      monitoringAlertsService.savePreferences(nextPreferences);
+
+      return nextPreferences;
+    });
+  }, []);
+
   const api = useMemo<MonitoringContextValue>(
     () => ({
+      alertPreferences,
+      updateAlertPreferences,
       state,
       startCamera,
       stopCamera,
       syncState,
       reset,
     }),
-    [reset, startCamera, state, stopCamera, syncState],
+    [alertPreferences, reset, startCamera, state, stopCamera, syncState, updateAlertPreferences],
   );
 
   return <MonitoringContext.Provider value={api}>{children}</MonitoringContext.Provider>;

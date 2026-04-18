@@ -1,3 +1,5 @@
+import { z } from "zod/v4";
+
 export interface Keypoint {
   class_id: number;
   class: string;
@@ -27,11 +29,27 @@ export interface MonitoringUiState {
   errorMessage: string | null;
 }
 
+export const monitoringAlertPreferencesSchema = z.object({
+  desktopNotificationsEnabled: z.boolean(),
+  soundEnabled: z.boolean(),
+});
+
+export type MonitoringAlertPreferences = z.infer<typeof monitoringAlertPreferencesSchema>;
+
+export type BrowserNotificationPermissionState = NotificationPermission | "unsupported";
+
+export const defaultMonitoringAlertPreferences: MonitoringAlertPreferences = {
+  desktopNotificationsEnabled: true,
+  soundEnabled: true,
+};
+
 export interface MonitoringContextValue {
   state: MonitoringUiState;
+  alertPreferences: MonitoringAlertPreferences;
   startCamera: () => void;
   stopCamera: () => void;
   syncState: (nextState: Partial<MonitoringUiState>) => void;
+  updateAlertPreferences: (nextState: Partial<MonitoringAlertPreferences>) => void;
   reset: () => void;
 }
 

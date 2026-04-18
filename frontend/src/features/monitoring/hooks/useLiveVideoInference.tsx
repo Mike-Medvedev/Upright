@@ -1,13 +1,19 @@
 import { inferenceClient } from "@/infra/inference.client";
-import { useEffect, useState, useEffectEvent, useCallback } from "react";
+import { useEffect, useState, useEffectEvent, useCallback, useRef } from "react";
+import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
 import useCanvas from "./useCanvas";
+import { monitoringAlertsService } from "../service/monitoring-alerts.service";
 import { monitoringService } from "../service/monitoring.service";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
 
+const BAD_POSTURE_ALERT_DELAY_MS = 5000;
+const BAD_POSTURE_ALERT_COOLDOWN_MS = 5000;
+
 export function useLiveVideoInference(isActive: boolean) {
+  const { alertPreferences } = useMonitoring();
   const { cameraStream, isLoading: isCameraLoading, error: cameraError } = useLocalCamera(isActive);
   const { canvasRef, drawEdge, reset, resize } = useCanvas();
   const [isLoading, setLoading] = useState<boolean>(true);
@@ -20,6 +26,11 @@ export function useLiveVideoInference(isActive: boolean) {
   const [hasCalibratedThisSession, setHasCalibratedThisSession] = useState<boolean>(false);
   const [headerMessage, setHeaderMessage] = useState<string | null>(null);
   const [headerMessageTone, setHeaderMessageTone] = useState<"default" | "success" | "warning">("default");
+  const latestAlertPreferencesRef = useRef(alertPreferences);
+  const latestIsHealthyPostureRef = useRef<boolean | null>(null);
+  const latestStatusRef = useRef<MonitoringSessionStatus>("idle");
+  const unhealthySinceRef = useRef<number | null>(null);
+  const lastAlertAtRef = useRef<number | null>(null);
 
   const videoRef = useCallback(
     (node: HTMLVideoElement | null) => {
@@ -182,6 +193,77 @@ export function useLiveVideoInference(isActive: boolean) {
       status = "live";
     }
   }
+
+  useEffect(() => {
+    latestAlertPreferencesRef.current = alertPreferences;
+  }, [alertPreferences]);
+
+  useEffect(() => {
+    latestIsHealthyPostureRef.current = isHealthyPosture;
+  }, [isHealthyPosture]);
+
+  useEffect(() => {
+    latestStatusRef.current = status;
+  }, [status]);
+
+  useEffect(() => {
+    if (!isActive || status !== "live" || isHealthyPosture !== false) {
+      unhealthySinceRef.current = null;
+      return;
+    }
+
+    if (unhealthySinceRef.current === null) {
+      unhealthySinceRef.current = Date.now();
+    }
+  }, [isActive, isHealthyPosture, status]);
+
+  useEffect(() => {
+    if (!isActive) {
+      unhealthySinceRef.current = null;
+      lastAlertAtRef.current = null;
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (latestStatusRef.current !== "live" || latestIsHealthyPostureRef.current !== false) {
+        return;
+      }
+
+      const preferences = latestAlertPreferencesRef.current;
+      if (!preferences.soundEnabled && !preferences.desktopNotificationsEnabled) {
+        return;
+      }
+
+      const now = Date.now();
+
+      if (unhealthySinceRef.current === null) {
+        unhealthySinceRef.current = now;
+        return;
+      }
+
+      if (now - unhealthySinceRef.current < BAD_POSTURE_ALERT_DELAY_MS) {
+        return;
+      }
+
+      if (lastAlertAtRef.current !== null && now - lastAlertAtRef.current < BAD_POSTURE_ALERT_COOLDOWN_MS) {
+        return;
+      }
+
+      lastAlertAtRef.current = now;
+
+      if (preferences.soundEnabled) {
+        monitoringAlertsService.speakBadPostureAlert();
+      }
+
+      if (preferences.desktopNotificationsEnabled) {
+        monitoringAlertsService.showBadPostureNotification();
+      }
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isActive]);
 
   const startCalibration = () => {
     setProgress(0);

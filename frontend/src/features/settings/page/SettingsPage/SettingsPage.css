@@ -12,6 +12,32 @@
   margin-bottom: var(--mantine-spacing-xs);
 }
 
+.settingsToggleRow {
+  align-items: flex-start;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: var(--mantine-spacing-md);
+  padding-top: var(--mantine-spacing-md);
+}
+
+.settingsToggleRow:first-of-type {
+  border-top: none;
+  margin-top: var(--mantine-spacing-sm);
+  padding-top: var(--mantine-spacing-sm);
+}
+
+.settingsToggleCopy {
+  flex: 1;
+}
+
+.settingsSupportText {
+  color: var(--mantine-color-dimmed);
+  margin-top: 6px;
+}
+
+.settingsNotificationTestButton {
+  max-width: 180px;
+}
+
 .settingsPlaceholderRow {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: var(--mantine-spacing-sm);
