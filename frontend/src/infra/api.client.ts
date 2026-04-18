@@ -1,8 +1,10 @@
-import { client } from "@/generated/client.gen";
+import { createClient } from "@/generated/client/client.gen";
 import { supabase } from "@/infra/auth/auth.client";
 import { settings } from "@/settings";
 
-client.setConfig({
+export const apiClient = createClient();
+
+apiClient.setConfig({
   async auth() {
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token;

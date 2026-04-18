@@ -7,7 +7,7 @@ import type {
   ValidKeypoint,
   ValidKeypoints,
 } from "@/features/monitoring/monitoring.types";
-import { SlidingWindowBuffer, CalibrationBuffer } from "@/features/monitoring/service/buffer";
+import { SlidingWindowBuffer, CalibrationBuffer } from "@/features/monitoring/service/Buffer";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
 
@@ -48,7 +48,7 @@ export class MonitoringService {
       };
     }
 
-    if(raw.output.predictions.length > 1) {
+    if (raw.output.predictions.length > 1) {
       return { validatedFrame: null, error: new InferenceError("MULTIPLE_PERSONS_IN_FRAME") };
     }
 
@@ -73,7 +73,8 @@ export class MonitoringService {
     if (this._isCalibrating) {
       this.calibrationBuffer.push(keypoints);
       if (this.calibrationBuffer.isFull) {
-        this.calibratedHeight = this.calibrationBuffer.calibratedHeight * this.HEALTHY_POSTURE_HEIGHT_DEVIATION;
+        this.calibratedHeight =
+          this.calibrationBuffer.calibratedHeight * this.HEALTHY_POSTURE_HEIGHT_DEVIATION;
         console.log("Calibrated Height: ", this.calibratedHeight);
         this._isCalibrating = false;
       }
