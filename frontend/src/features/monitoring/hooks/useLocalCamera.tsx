@@ -2,13 +2,18 @@ import { cameraClient } from "@/infra/camera.client";
 import { LocalCameraError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 
-function useLocalCamera() {
-  const [isLoading, setLoading] = useState<boolean>(true);
+function useLocalCamera(enabled: boolean) {
   const [error, setError] = useState<Error | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      cameraClient.stop();
+      return;
+    }
+
     let disposed = false;
+
     cameraClient
       .getCamera()
       .then((stream) => {
@@ -22,20 +27,24 @@ function useLocalCamera() {
         if (disposed) return;
         setError(
           new LocalCameraError(
-            "Local Camerea could not be acquired",
+            "Local camera could not be acquired.",
             error instanceof Error ? error.cause : undefined,
           ),
         );
       })
-      .finally(() => {
-        if (!disposed) setLoading(false);
-      });
+
     return () => {
       disposed = true;
       cameraClient.stop();
+      setError(null);
+      setCameraStream(null);
     };
-  }, []);
+  }, [enabled]);
 
-  return { cameraStream, isLoading, error };
+  return {
+    cameraStream: enabled ? cameraStream : null,
+    error: enabled ? error : null,
+    isLoading: enabled && cameraStream == null && error == null,
+  };
 }
 export default useLocalCamera;

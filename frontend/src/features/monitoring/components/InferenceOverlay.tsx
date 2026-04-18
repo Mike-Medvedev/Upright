@@ -1,47 +1,57 @@
-import { Button } from "@mantine/core";
-import { monitoringService } from "../service/monitoring.service";
+import { Loader, Progress, Stack, Text } from "@mantine/core";
+import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
+
 export default function InferenceOverlay({
-  isLoading,
-  isCalibrating,
-  setCalibrating,
+  status,
+  calibrationProgress,
+  errorMessage,
 }: {
-  isLoading: boolean;
-  isCalibrating: boolean;
-  setCalibrating: React.Dispatch<React.SetStateAction<boolean>>;
+  status: MonitoringSessionStatus;
+  calibrationProgress: number;
+  errorMessage: string | null;
 }) {
-  if (isLoading) {
+  if (status === "connecting") {
     return (
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(0,0,0,0.5)",
-        }}>
-        <p>Connecting to inference...</p>
+      <div aria-live="polite" className="monitoringVideoOverlay monitoringVideoOverlay_connecting">
+        <Stack align="center" gap="sm">
+          <Loader color="grape" size="sm" />
+          <Text fw={600}>Connecting…</Text>
+          <Text c="dimmed" size="sm">
+            Getting the camera and inference stream ready.
+          </Text>
+        </Stack>
       </div>
     );
   }
+
+  if (status === "error") {
+    return (
+      <div aria-live="polite" className="monitoringVideoOverlay monitoringVideoOverlay_dim">
+        <Stack align="center" gap="xs">
+          <Text fw={600}>Camera Unavailable</Text>
+          <Text c="dimmed" maw={360} size="sm">
+            {errorMessage ?? "Check camera permissions and try starting the session again."}
+          </Text>
+        </Stack>
+      </div>
+    );
+  }
+
+  if (status !== "calibrating") {
+    return null;
+  }
+
   return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        justifyContent: "flex-end",
-        height: "fit-content",
-        padding: "1rem",
-      }}>
-      <Button
-        disabled={isCalibrating}
-        onClick={() => {
-          setCalibrating(true);
-          monitoringService.startCalibration();
-        }}>
-        Calibrate
-      </Button>
+    <div aria-live="polite" className="monitoringCalibrationBanner">
+      <Stack gap="xs">
+        <Text fw={600} size="sm">
+          Calibrating…
+        </Text>
+        <Text c="dimmed" size="xs">
+          Sit naturally and keep your shoulders visible for a few seconds.
+        </Text>
+        <Progress color="grape" radius="xl" size="sm" value={calibrationProgress} />
+      </Stack>
     </div>
   );
 }

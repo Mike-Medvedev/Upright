@@ -5,9 +5,10 @@ import useCanvas from "./useCanvas";
 import { monitoringService } from "../service/monitoring.service";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
+import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
 
-export function useLiveVideoInference() {
-  const { cameraStream } = useLocalCamera();
+export function useLiveVideoInference(isActive: boolean) {
+  const { cameraStream, isLoading: isCameraLoading, error: cameraError } = useLocalCamera(isActive);
   const { canvasRef, drawText, drawEdge, reset, resize, getCanvasDimensions } = useCanvas();
   const [isLoading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -18,17 +19,20 @@ export function useLiveVideoInference() {
     (node: HTMLVideoElement | null) => {
       if (node) {
         node.srcObject = cameraStream;
-        node.addEventListener("loadedmetadata", () => {
+        node.onloadedmetadata = () => {
           resize(node.videoWidth, node.videoHeight);
           monitoringService.setDimensions({ width: node.videoWidth, height: node.videoHeight });
-        });
+        };
       }
     },
     [cameraStream, resize],
   );
   const onData = useEffectEvent((data: WebRTCOutputData): void => {
     const { width, height } = getCanvasDimensions();
-    if (isLoading) setLoading(false);
+    if (isLoading) {
+      setLoading(false);
+    }
+
     const { validatedFrame, error } = monitoringService.parseFrame(data);
     if (error instanceof InferenceError) {
       if (error.code === "MISSING_KEYPOINTS") {
@@ -51,7 +55,7 @@ export function useLiveVideoInference() {
       error: postureError,
       calibration: calibrationData,
     } = monitoringService.process(validatedFrame);
-    if (error && !postureData) {
+    if (postureError && !postureData) {
       if (postureError instanceof InferenceError) {
         switch (postureError.code) {
           case "MISSING_NOSE_KEYPOINT":
@@ -84,7 +88,7 @@ export function useLiveVideoInference() {
     if (calibrationData != null) {
       reset();
       drawText({
-        text: `Calibrating... ${calibrationData.progress}%`,
+        text: `Calibrating… ${calibrationData.progress}%`,
         color: "blue",
         point: { x: 15, y: 200 },
       });
@@ -111,22 +115,58 @@ export function useLiveVideoInference() {
   });
 
   useEffect(() => {
-    if (!cameraStream) {
+    if (!isActive || !cameraStream) {
       return;
     }
+
     let disposed = false;
 
     inferenceClient.start(cameraStream, onData).catch((error) => {
       if (!disposed) {
         setError(error);
+        setLoading(false);
       }
     });
 
     return () => {
       disposed = true;
       inferenceClient.stop();
+      setLoading(true);
+      setError(null);
+      setProgress(0);
+      setCalibrating(false);
+      reset();
     };
-  }, [cameraStream]);
+  }, [cameraStream, isActive, reset]);
 
-  return { videoRef, canvasRef, isLoading, isCalibrating, setCalibrating, error };
+  const combinedError = cameraError ?? error;
+  let status: MonitoringSessionStatus = "idle";
+
+  if (isActive) {
+    if (combinedError) {
+      status = "error";
+    } else if (isCalibrating) {
+      status = "calibrating";
+    } else if (isCameraLoading || isLoading) {
+      status = "connecting";
+    } else {
+      status = "live";
+    }
+  }
+
+  const startCalibration = () => {
+    setProgress(0);
+    setCalibrating(true);
+    monitoringService.startCalibration();
+  };
+
+  return {
+    videoRef,
+    canvasRef,
+    calibrationProgress,
+    error: combinedError,
+    isCalibrating,
+    startCalibration,
+    status,
+  };
 }

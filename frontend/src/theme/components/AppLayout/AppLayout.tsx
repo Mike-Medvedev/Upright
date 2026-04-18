@@ -1,6 +1,8 @@
 import { AppShell, Avatar, Box, Group, Loader, Menu, NavLink, Stack, Text, Title } from "@mantine/core";
 import { IconChartBar, IconSettings, IconVideo } from "@tabler/icons-react";
 import { useState } from "react";
+import { useMonitoring } from "@/features/monitoring/monitoring.context";
+import { MonitoringProvider } from "@/features/monitoring/monitoring.provider";
 import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/infra/auth/auth.context";
 import { AppLogo } from "@/theme/components/AppLogo/AppLogo";
@@ -24,7 +26,16 @@ const navLinkClassNames = {
 } as const;
 
 export function AppLayout() {
+  return (
+    <MonitoringProvider>
+      <AppLayoutShell />
+    </MonitoringProvider>
+  );
+}
+
+function AppLayoutShell() {
   const { logout, user } = useAuth();
+  const { state: monitoringState } = useMonitoring();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -114,6 +125,14 @@ export function AppLayout() {
               component={RouterNavLink}
               label="Monitoring"
               leftSection={<IconVideo className="appLayoutNavIcon" size={18} stroke={1.5} />}
+              rightSection={
+                monitoringState.status !== "idle" ? (
+                  <span
+                    aria-hidden="true"
+                    className={`appLayoutNavStatus appLayoutNavStatus_${monitoringState.status}`}
+                  />
+                ) : undefined
+              }
               to="/monitoring"
               variant="subtle"
             />

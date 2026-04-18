@@ -11,6 +11,23 @@ export interface ValidationData {
   keypoints: ValidKeypoints;
 }
 
+export type MonitoringSessionStatus = "idle" | "connecting" | "live" | "calibrating" | "error";
+
+export interface MonitoringUiState {
+  isCameraActive: boolean;
+  status: MonitoringSessionStatus;
+  calibrationProgress: number;
+  errorMessage: string | null;
+}
+
+export interface MonitoringContextValue {
+  state: MonitoringUiState;
+  startCamera: () => void;
+  stopCamera: () => void;
+  syncState: (nextState: Partial<MonitoringUiState>) => void;
+  reset: () => void;
+}
+
 export type ValidKeypoint = Keypoint & {
   class: "nose" | "left_shoulder" | "right_shoulder";
 };

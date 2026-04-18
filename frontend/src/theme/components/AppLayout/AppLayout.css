@@ -121,9 +121,50 @@
   color: var(--mantine-color-grape-0);
 }
 
+.appLayoutNavStatus {
+  border-radius: 999px;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 8px;
+  width: 8px;
+}
+
+.appLayoutNavStatus_live {
+  animation: appLayoutNavPulse 1.8s ease-in-out infinite;
+  background: var(--mantine-color-green-5);
+}
+
+.appLayoutNavStatus_connecting,
+.appLayoutNavStatus_calibrating {
+  background: var(--mantine-color-yellow-5);
+}
+
+.appLayoutNavStatus_error {
+  background: var(--mantine-color-red-5);
+}
+
 .appLayoutMain {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appLayoutNavStatus_live {
+    animation: none;
+  }
+}
+
+@keyframes appLayoutNavPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
 }

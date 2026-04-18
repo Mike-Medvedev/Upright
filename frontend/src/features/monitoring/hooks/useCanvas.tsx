@@ -26,18 +26,30 @@ export default function useCanvas() {
     }
   }, []);
 
-  function getCanvasDimensions() {
+  const getCanvasDimensions = useCallback(() => {
     return {
       width: canvasNodeRef.current?.width ?? 0,
       height: canvasNodeRef.current?.height ?? 0,
     };
-  }
+  }, []);
+
+  const drawText = useCallback((props: CanvasTextProps) => {
+    canvasServiceRef.current?.drawText(props);
+  }, []);
+
+  const drawEdge = useCallback((props: CanvasEdgeProps) => {
+    canvasServiceRef.current?.drawEdge(props);
+  }, []);
+
+  const reset = useCallback(() => {
+    canvasServiceRef.current?.reset();
+  }, []);
 
   return {
     canvasRef,
-    drawText: (props: CanvasTextProps) => canvasServiceRef.current?.drawText(props),
-    drawEdge: (props: CanvasEdgeProps) => canvasServiceRef.current?.drawEdge(props),
-    reset: () => canvasServiceRef.current?.reset(),
+    drawText,
+    drawEdge,
+    reset,
     resize,
     getCanvasDimensions,
   };
