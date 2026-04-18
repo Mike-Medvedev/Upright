@@ -129,6 +129,10 @@
   width: 8px;
 }
 
+.appLayoutNavStatus_idle {
+  background: rgba(255, 255, 255, 0.35);
+}
+
 .appLayoutNavStatus_live {
   animation: appLayoutNavPulse 1.8s ease-in-out infinite;
   background: var(--mantine-color-green-5);

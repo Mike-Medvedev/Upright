@@ -16,8 +16,9 @@ export class MonitoringService {
   private readonly buffer: SlidingWindowBuffer;
   private calibrationBuffer: CalibrationBuffer;
   private videoDimensions: { width: number; height: number } = { width: 0, height: 0 };
-  private calibratedHeight: number = 150 * 0.8;
+  private calibratedHeight: number = 0;
   private _isCalibrating: boolean = false;
+  private readonly HEALTHY_POSTURE_HEIGHT_DEVIATION: number = 0.9;
 
   constructor() {
     this.buffer = new SlidingWindowBuffer();
@@ -30,6 +31,7 @@ export class MonitoringService {
     | { validatedFrame: ValidatedFrame; error: null }
     | { validatedFrame: null; error: InferenceError } {
     const raw = data.serialized_output_data as Frame;
+    console.log("Raw frame: ", raw);
 
     // Verify the structural hierarchy exists
     const hasPredictions = raw?.output?.predictions?.length > 0;
@@ -44,6 +46,10 @@ export class MonitoringService {
         validatedFrame: null,
         error: new InferenceError("MISSING_PREDICTION_IMAGE_DIMENSIONS"),
       };
+    }
+
+    if(raw.output.predictions.length > 1) {
+      return { validatedFrame: null, error: new InferenceError("MULTIPLE_PERSONS_IN_FRAME") };
     }
 
     return { validatedFrame: raw as ValidatedFrame, error: null };
@@ -67,7 +73,7 @@ export class MonitoringService {
     if (this._isCalibrating) {
       this.calibrationBuffer.push(keypoints);
       if (this.calibrationBuffer.isFull) {
-        this.calibratedHeight = this.calibrationBuffer.calibratedHeight;
+        this.calibratedHeight = this.calibrationBuffer.calibratedHeight * this.HEALTHY_POSTURE_HEIGHT_DEVIATION;
         console.log("Calibrated Height: ", this.calibratedHeight);
         this._isCalibrating = false;
       }

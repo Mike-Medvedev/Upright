@@ -1,4 +1,4 @@
-import { Button, Group, Paper, Progress, Stack, Text } from "@mantine/core";
+import { Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
 import { CameraPreview } from "@/features/monitoring/components/CameraPreview";
 import { useLiveVideoInference } from "@/features/monitoring/hooks/useLiveVideoInference";
@@ -8,8 +8,17 @@ import "./MonitoringPage.css";
 
 export function MonitoringPage() {
   const { reset, startCamera, state, stopCamera, syncState } = useMonitoring();
-  const { calibrationProgress, canvasRef, error, isHealthyPosture, startCalibration, status, videoRef } =
-    useLiveVideoInference(state.isCameraActive);
+  const {
+    calibrationProgress,
+    canvasRef,
+    error,
+    headerMessage: inferenceHeaderMessage,
+    headerMessageTone: inferenceHeaderMessageTone,
+    isHealthyPosture,
+    startCalibration,
+    status,
+    videoRef,
+  } = useLiveVideoInference(state.isCameraActive);
 
   useEffect(() => {
     if (!state.isCameraActive) {
@@ -30,11 +39,12 @@ export function MonitoringPage() {
   const currentErrorMessage = isCameraActive ? error?.message ?? null : state.errorMessage;
   const isCalibrating = currentStatus === "calibrating";
   const canCalibrate = isCameraActive && currentStatus === "live";
-  const headerMessage = getHeaderMessage(
-    currentStatus,
-    currentErrorMessage,
-    calibrationProgress,
-  );
+  const headerMessage =
+    isCameraActive
+      ? inferenceHeaderMessage ?? getHeaderMessage(currentStatus, currentErrorMessage)
+      : getHeaderMessage(currentStatus, currentErrorMessage);
+  const headerMessageTone =
+    isCameraActive && inferenceHeaderMessage ? inferenceHeaderMessageTone : getHeaderMessageTone(currentStatus);
 
   return (
     <Stack className="monitoringPage" gap="md">
@@ -43,8 +53,11 @@ export function MonitoringPage() {
         p={0}
         radius="lg"
       >
-        <div className="monitoringPreviewTopBar">
-          <Text aria-live="polite" className="monitoringPreviewTopTitle">
+        <div className={`monitoringPreviewTopBar monitoringPreviewTopBar_${headerMessageTone}`}>
+          <Text
+            aria-live="polite"
+            className={`monitoringPreviewTopTitle monitoringPreviewTopTitle_${headerMessageTone}`}
+          >
             {headerMessage}
           </Text>
         </div>
@@ -52,6 +65,7 @@ export function MonitoringPage() {
         {isCameraActive ? (
           <>
             <CameraPreview
+              calibrationProgress={calibrationProgress}
               canvasRef={canvasRef}
               errorMessage={currentErrorMessage}
               status={currentStatus}
@@ -66,17 +80,6 @@ export function MonitoringPage() {
                   {isCalibrating ? `Calibrating… ${Math.round(calibrationProgress)}%` : "Calibrate"}
                 </Button>
               </Group>
-              {isCalibrating ? (
-                <div className="monitoringCalibrationStatus">
-                  <Text className="monitoringCalibrationTitle" size="sm">
-                    Calibrating posture monitoring
-                  </Text>
-                  <Text c="dimmed" size="xs">
-                    Sit naturally and keep your shoulders visible for a few seconds.
-                  </Text>
-                  <Progress color="grape" radius="xl" size="sm" value={calibrationProgress} />
-                </div>
-              ) : null}
             </div>
           </>
         ) : (
@@ -96,7 +99,6 @@ export function MonitoringPage() {
 function getHeaderMessage(
   status: MonitoringSessionStatus,
   errorMessage: string | null,
-  calibrationProgress: number,
 ) {
   switch (status) {
     case "idle":
@@ -106,9 +108,18 @@ function getHeaderMessage(
     case "live":
       return "Posture monitoring is live while you work.";
     case "calibrating":
-      return `Calibrating posture monitoring at ${Math.round(calibrationProgress)}%. Hold still for a moment.`;
+      return "Please sit upright in a comfortable position during calibration.";
     case "error":
       return errorMessage ?? "The camera could not be started. Check permissions and try again.";
+  }
+}
+
+function getHeaderMessageTone(status: MonitoringSessionStatus) {
+  switch (status) {
+    case "error":
+      return "warning";
+    default:
+      return "default";
   }
 }
 

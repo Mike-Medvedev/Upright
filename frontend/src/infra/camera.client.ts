@@ -17,7 +17,7 @@ class CameraClient {
 
   stop() {
     if (this.stream) this.stream.getTracks().forEach((track) => track.stop());
-    else console.warn("Attemoted to stop null camera stream");
+    else console.warn("Attempted to stop null camera stream");
   }
 }
 export const cameraClient = new CameraClient();

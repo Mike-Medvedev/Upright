@@ -9,12 +9,14 @@ import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.t
 
 export function useLiveVideoInference(isActive: boolean) {
   const { cameraStream, isLoading: isCameraLoading, error: cameraError } = useLocalCamera(isActive);
-  const { canvasRef, drawText, drawEdge, reset, resize, getCanvasDimensions } = useCanvas();
+  const { canvasRef, drawEdge, reset, resize } = useCanvas();
   const [isLoading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [calibrationProgress, setProgress] = useState<number>(0);
   const [isCalibrating, setCalibrating] = useState<boolean>(false);
   const [isHealthyPosture, setHealthyPosture] = useState<boolean | null>(null);
+  const [headerMessage, setHeaderMessage] = useState<string | null>(null);
+  const [headerMessageTone, setHeaderMessageTone] = useState<"default" | "success" | "warning">("default");
 
   const videoRef = useCallback(
     (node: HTMLVideoElement | null) => {
@@ -29,20 +31,16 @@ export function useLiveVideoInference(isActive: boolean) {
     [cameraStream, resize],
   );
   const onData = useEffectEvent((data: WebRTCOutputData): void => {
-    const { width, height } = getCanvasDimensions();
     if (isLoading) {
       setLoading(false);
     }
 
     const { validatedFrame, error } = monitoringService.parseFrame(data);
     if (error instanceof InferenceError) {
-      if (error.code === "MISSING_KEYPOINTS") {
-        drawText({
-          text: "Please make sure both shoulders and head are in frame!",
-          point: { x: width * 0.8, y: height * 0.2 },
-          color: "red",
-          font: "24px Inter",
-        });
+      const nextHeaderState = getInferenceHeaderState(error);
+      if (nextHeaderState) {
+        setHeaderMessage(nextHeaderState.message);
+        setHeaderMessageTone(nextHeaderState.tone);
       }
       if (error.code === "MISSING_PREDICTION_IMAGE_DIMENSIONS") {
         console.warn("MISSING_PREDICTION_IMAGE_DIMENSIONS");
@@ -58,30 +56,10 @@ export function useLiveVideoInference(isActive: boolean) {
     } = monitoringService.process(validatedFrame);
     if (postureError && !postureData) {
       if (postureError instanceof InferenceError) {
-        switch (postureError.code) {
-          case "MISSING_NOSE_KEYPOINT":
-            drawText({
-              text: "Please make sure Nose is in frame!",
-              point: { x: width * 0.8, y: height * 0.8 },
-              color: "red",
-            });
-            break;
-          case "MISSING_LSHOULDER_KEYPOINT":
-            drawText({
-              text: "Please make sure Left shoulder is in frame!",
-              point: { x: width * 0.8, y: height * 0.8 },
-              color: "red",
-            });
-            break;
-          case "MISSING_RSHOULDER_KEYPOINT":
-            drawText({
-              text: "Please make sure Right Shoulder is in frame!",
-              point: { x: width * 0.8, y: height * 0.8 },
-              color: "red",
-            });
-            break;
-          default:
-            break;
+        const nextHeaderState = getInferenceHeaderState(postureError);
+        if (nextHeaderState) {
+          setHeaderMessage(nextHeaderState.message);
+          setHeaderMessageTone(nextHeaderState.tone);
         }
         return;
       }
@@ -89,6 +67,8 @@ export function useLiveVideoInference(isActive: boolean) {
     if (calibrationData != null) {
       reset();
       setHealthyPosture(null);
+      setHeaderMessage(null);
+      setHeaderMessageTone("default");
       if (calibrationData.isComplete) {
         setProgress(100);
         setCalibrating(false);
@@ -100,12 +80,9 @@ export function useLiveVideoInference(isActive: boolean) {
     if (!postureData) return;
     const { lShoulder, rShoulder } = postureData.keypoints;
     setHealthyPosture(postureData.isHealthyPosture);
+    setHeaderMessage(postureData.isHealthyPosture ? "Healthy posture" : "Unhealthy posture");
+    setHeaderMessageTone(postureData.isHealthyPosture ? "success" : "warning");
     reset();
-    drawText({
-      text: postureData.isHealthyPosture ? "Healthy" : "Unhealthy",
-      color: postureData.isHealthyPosture ? "green" : "red",
-      point: { x: width * 0.1, y: height * 0.1 }, // 10% from top left
-    });
     drawEdge({
       point1: { x: lShoulder.x, y: lShoulder.y },
       point2: { x: rShoulder.x, y: rShoulder.y },
@@ -134,6 +111,8 @@ export function useLiveVideoInference(isActive: boolean) {
       setProgress(0);
       setCalibrating(false);
       setHealthyPosture(null);
+      setHeaderMessage(null);
+      setHeaderMessageTone("default");
       reset();
     };
   }, [cameraStream, isActive, reset]);
@@ -156,6 +135,8 @@ export function useLiveVideoInference(isActive: boolean) {
   const startCalibration = () => {
     setProgress(0);
     setCalibrating(true);
+    setHeaderMessage(null);
+    setHeaderMessageTone("default");
     monitoringService.startCalibration();
   };
 
@@ -164,9 +145,28 @@ export function useLiveVideoInference(isActive: boolean) {
     canvasRef,
     calibrationProgress,
     error: combinedError,
+    headerMessage,
+    headerMessageTone,
     isHealthyPosture,
     isCalibrating,
     startCalibration,
     status,
   };
+}
+
+function getInferenceHeaderState(error: InferenceError): { message: string; tone: "warning" } | null {
+  switch (error.code) {
+    case "MISSING_KEYPOINTS":
+      return { message: "Please make sure both shoulders and head are in frame!", tone: "warning" };
+    case "MISSING_NOSE_KEYPOINT":
+      return { message: "Please make sure your nose is in frame!", tone: "warning" };
+    case "MISSING_LSHOULDER_KEYPOINT":
+      return { message: "Please make sure your left shoulder is in frame!", tone: "warning" };
+    case "MISSING_RSHOULDER_KEYPOINT":
+      return { message: "Please make sure your right shoulder is in frame!", tone: "warning" };
+    case "MULTIPLE_PERSONS_IN_FRAME":
+      return { message: "Please make sure only one person is in frame!", tone: "warning" };
+    default:
+      return null;
+  }
 }

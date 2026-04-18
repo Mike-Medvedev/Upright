@@ -126,12 +126,10 @@ function AppLayoutShell() {
               label="Monitoring"
               leftSection={<IconVideo className="appLayoutNavIcon" size={18} stroke={1.5} />}
               rightSection={
-                monitoringState.status !== "idle" ? (
-                  <span
-                    aria-hidden="true"
-                    className={`appLayoutNavStatus appLayoutNavStatus_${monitoringState.status}`}
-                  />
-                ) : undefined
+                <span
+                  aria-hidden="true"
+                  className={`appLayoutNavStatus appLayoutNavStatus_${monitoringState.status}`}
+                />
               }
               to="/monitoring"
               variant="subtle"
