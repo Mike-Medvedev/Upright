@@ -13,7 +13,7 @@ import { InferenceError } from "@/lib/errors";
 
 //Todo: Ensure theres only one person in frame
 export class MonitoringService {
-  private readonly buffer: SlidingWindowBuffer;
+  private buffer: SlidingWindowBuffer;
   private calibrationBuffer: CalibrationBuffer;
   private videoDimensions: { width: number; height: number } = { width: 0, height: 0 };
   private calibratedHeight: number = 0;
@@ -103,9 +103,16 @@ export class MonitoringService {
   }
 
   startCalibration() {
-    // reset buffer by creating a fresh one
+    this.buffer = new SlidingWindowBuffer();
     this.calibrationBuffer = new CalibrationBuffer(150);
     this._isCalibrating = true;
+  }
+
+  resetSession() {
+    this.buffer = new SlidingWindowBuffer();
+    this.calibrationBuffer = new CalibrationBuffer(150);
+    this.calibratedHeight = 0;
+    this._isCalibrating = false;
   }
 
   private extractKeypoints(

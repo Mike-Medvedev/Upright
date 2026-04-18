@@ -13,8 +13,11 @@ export function useLiveVideoInference(isActive: boolean) {
   const [isLoading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [calibrationProgress, setProgress] = useState<number>(0);
+  const [calibrationCountdown, setCalibrationCountdown] = useState<number | null>(null);
   const [isCalibrating, setCalibrating] = useState<boolean>(false);
   const [isHealthyPosture, setHealthyPosture] = useState<boolean | null>(null);
+  const [requiresCalibration, setRequiresCalibration] = useState<boolean>(false);
+  const [hasCalibratedThisSession, setHasCalibratedThisSession] = useState<boolean>(false);
   const [headerMessage, setHeaderMessage] = useState<string | null>(null);
   const [headerMessageTone, setHeaderMessageTone] = useState<"default" | "success" | "warning">("default");
 
@@ -35,8 +38,15 @@ export function useLiveVideoInference(isActive: boolean) {
       setLoading(false);
     }
 
+    if (calibrationCountdown !== null) {
+      setHealthyPosture(null);
+      reset();
+      return;
+    }
+
     const { validatedFrame, error } = monitoringService.parseFrame(data);
     if (error instanceof InferenceError) {
+      setHealthyPosture(null);
       const nextHeaderState = getInferenceHeaderState(error);
       if (nextHeaderState) {
         setHeaderMessage(nextHeaderState.message);
@@ -56,6 +66,7 @@ export function useLiveVideoInference(isActive: boolean) {
     } = monitoringService.process(validatedFrame);
     if (postureError && !postureData) {
       if (postureError instanceof InferenceError) {
+        setHealthyPosture(null);
         const nextHeaderState = getInferenceHeaderState(postureError);
         if (nextHeaderState) {
           setHeaderMessage(nextHeaderState.message);
@@ -72,22 +83,54 @@ export function useLiveVideoInference(isActive: boolean) {
       if (calibrationData.isComplete) {
         setProgress(100);
         setCalibrating(false);
+        setRequiresCalibration(false);
+        setHasCalibratedThisSession(true);
       } else {
         setProgress(calibrationData.progress);
       }
       return;
     }
     if (!postureData) return;
+    if (!hasCalibratedThisSession) {
+      setRequiresCalibration(true);
+      setHealthyPosture(null);
+      setHeaderMessage(null);
+      setHeaderMessageTone("default");
+      reset();
+      return;
+    }
     const { lShoulder, rShoulder } = postureData.keypoints;
     setHealthyPosture(postureData.isHealthyPosture);
     setHeaderMessage(postureData.isHealthyPosture ? "Healthy posture" : "Unhealthy posture");
     setHeaderMessageTone(postureData.isHealthyPosture ? "success" : "warning");
     reset();
     drawEdge({
+      color: postureData.isHealthyPosture ? "rgba(64, 192, 87, 0.95)" : "rgba(250, 82, 82, 0.95)",
       point1: { x: lShoulder.x, y: lShoulder.y },
       point2: { x: rShoulder.x, y: rShoulder.y },
+      width: 6,
     });
   });
+
+  useEffect(() => {
+    if (calibrationCountdown === null) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (calibrationCountdown === 1) {
+        setCalibrationCountdown(null);
+        setProgress(0);
+        setCalibrating(true);
+        monitoringService.startCalibration();
+        return;
+      }
+
+      setCalibrationCountdown((current) => (current == null ? null : current - 1));
+    }, 1000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [calibrationCountdown]);
 
   useEffect(() => {
     if (!isActive || !cameraStream) {
@@ -109,10 +152,14 @@ export function useLiveVideoInference(isActive: boolean) {
       setLoading(true);
       setError(null);
       setProgress(0);
+      setCalibrationCountdown(null);
       setCalibrating(false);
       setHealthyPosture(null);
+      setRequiresCalibration(false);
+      setHasCalibratedThisSession(false);
       setHeaderMessage(null);
       setHeaderMessageTone("default");
+      monitoringService.resetSession();
       reset();
     };
   }, [cameraStream, isActive, reset]);
@@ -123,10 +170,14 @@ export function useLiveVideoInference(isActive: boolean) {
   if (isActive) {
     if (combinedError) {
       status = "error";
+    } else if (calibrationCountdown !== null) {
+      status = "calibration_countdown";
     } else if (isCalibrating) {
       status = "calibrating";
     } else if (isCameraLoading || isLoading) {
       status = "connecting";
+    } else if (requiresCalibration) {
+      status = "needs_calibration";
     } else {
       status = "live";
     }
@@ -134,16 +185,18 @@ export function useLiveVideoInference(isActive: boolean) {
 
   const startCalibration = () => {
     setProgress(0);
-    setCalibrating(true);
+    setCalibrationCountdown(3);
+    setCalibrating(false);
+    setRequiresCalibration(false);
     setHeaderMessage(null);
     setHeaderMessageTone("default");
-    monitoringService.startCalibration();
   };
 
   return {
     videoRef,
     canvasRef,
     calibrationProgress,
+    calibrationCountdown,
     error: combinedError,
     headerMessage,
     headerMessageTone,

@@ -139,7 +139,8 @@
 }
 
 .appLayoutNavStatus_connecting,
-.appLayoutNavStatus_calibrating {
+.appLayoutNavStatus_calibrating,
+.appLayoutNavStatus_needs_calibration {
   background: var(--mantine-color-yellow-5);
 }
 

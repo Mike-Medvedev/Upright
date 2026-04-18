@@ -2,10 +2,12 @@ import { Loader, Progress, Stack, Text } from "@mantine/core";
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
 
 export default function InferenceOverlay({
+  calibrationCountdown,
   calibrationProgress,
   status,
   errorMessage,
 }: {
+  calibrationCountdown: number | null;
   calibrationProgress: number;
   status: MonitoringSessionStatus;
   errorMessage: string | null;
@@ -16,9 +18,6 @@ export default function InferenceOverlay({
         <Stack align="center" gap="sm">
           <Loader color="grape" size="sm" />
           <Text fw={600}>Connecting…</Text>
-          <Text c="dimmed" size="sm">
-            Getting the camera and inference stream ready.
-          </Text>
         </Stack>
       </div>
     );
@@ -45,17 +44,27 @@ export default function InferenceOverlay({
             <Text className="monitoringCalibrationOverlayLabel">Calibrating</Text>
             <Text className="monitoringCalibrationOverlayPercent">{Math.round(calibrationProgress)}%</Text>
           </div>
-          <Text c="dimmed" className="monitoringCalibrationOverlayText" size="sm">
-            Sit naturally and keep your shoulders visible for a few seconds.
-          </Text>
+          <Text className="monitoringCalibrationOverlayHeadline">Sit upright in a comfortable position</Text>
           <Progress
             animated
             color="grape"
+            className="monitoringCalibrationOverlayProgress"
             radius="xl"
             size="sm"
             striped
             value={calibrationProgress}
           />
+        </Stack>
+      </div>
+    );
+  }
+
+  if (status === "calibration_countdown") {
+    return (
+      <div aria-live="polite" className="monitoringVideoOverlay monitoringVideoOverlay_calibrating">
+        <Stack className="monitoringCalibrationOverlayRail monitoringCalibrationOverlayRail_countdown" gap="xs">
+          <Text className="monitoringCalibrationOverlayHeadline">Sit upright in a comfortable position</Text>
+          <Text className="monitoringCalibrationOverlayCountdown">{calibrationCountdown ?? 3}</Text>
         </Stack>
       </div>
     );

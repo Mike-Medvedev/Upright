@@ -9,6 +9,7 @@ import "./MonitoringPage.css";
 export function MonitoringPage() {
   const { reset, startCamera, state, stopCamera, syncState } = useMonitoring();
   const {
+    calibrationCountdown,
     calibrationProgress,
     canvasRef,
     error,
@@ -38,18 +39,22 @@ export function MonitoringPage() {
   const currentStatus = isCameraActive ? status : state.status;
   const currentErrorMessage = isCameraActive ? error?.message ?? null : state.errorMessage;
   const isCalibrating = currentStatus === "calibrating";
-  const canCalibrate = isCameraActive && currentStatus === "live";
+  const isCalibrationCountdown = currentStatus === "calibration_countdown";
+  const canCalibrate =
+    isCameraActive && (currentStatus === "live" || currentStatus === "needs_calibration");
   const headerMessage =
-    isCameraActive
+    isCameraActive && currentStatus !== "connecting"
       ? inferenceHeaderMessage ?? getHeaderMessage(currentStatus, currentErrorMessage)
       : getHeaderMessage(currentStatus, currentErrorMessage);
   const headerMessageTone =
-    isCameraActive && inferenceHeaderMessage ? inferenceHeaderMessageTone : getHeaderMessageTone(currentStatus);
+    isCameraActive && currentStatus !== "connecting" && inferenceHeaderMessage
+      ? inferenceHeaderMessageTone
+      : getHeaderMessageTone(currentStatus);
 
   return (
     <Stack className="monitoringPage" gap="md">
       <Paper
-        className={getPreviewCardClassName(isCameraActive, isHealthyPosture)}
+        className={getPreviewCardClassName(isCameraActive, currentStatus, isHealthyPosture)}
         p={0}
         radius="lg"
       >
@@ -65,6 +70,7 @@ export function MonitoringPage() {
         {isCameraActive ? (
           <>
             <CameraPreview
+              calibrationCountdown={calibrationCountdown}
               calibrationProgress={calibrationProgress}
               canvasRef={canvasRef}
               errorMessage={currentErrorMessage}
@@ -76,8 +82,18 @@ export function MonitoringPage() {
                 <Button color="red" onClick={stopCamera} variant="light">
                   Stop Recording
                 </Button>
-                <Button disabled={!canCalibrate} loading={isCalibrating} onClick={startCalibration} variant="default">
-                  {isCalibrating ? `Calibrating… ${Math.round(calibrationProgress)}%` : "Calibrate"}
+                <Button
+                  className={currentStatus === "needs_calibration" ? "monitoringCalibrateButton_prompt" : undefined}
+                  disabled={!canCalibrate || isCalibrationCountdown}
+                  loading={isCalibrating || isCalibrationCountdown}
+                  onClick={startCalibration}
+                  variant="default"
+                >
+                  {isCalibrationCountdown
+                    ? `Starting in ${calibrationCountdown ?? 3}`
+                    : isCalibrating
+                      ? `Calibrating… ${Math.round(calibrationProgress)}%`
+                      : "Calibrate"}
                 </Button>
               </Group>
             </div>
@@ -104,7 +120,11 @@ function getHeaderMessage(
     case "idle":
       return "Click Start Recording to monitor your posture while you work.";
     case "connecting":
-      return "Connecting to your camera and starting posture monitoring.";
+      return "Connecting to Live Inference API and starting posture monitoring.";
+    case "needs_calibration":
+      return "Calibration required before posture monitoring can begin. Click Calibrate to continue.";
+    case "calibration_countdown":
+      return "Sit upright in a comfortable position. Calibration is about to begin.";
     case "live":
       return "Posture monitoring is live while you work.";
     case "calibrating":
@@ -123,9 +143,17 @@ function getHeaderMessageTone(status: MonitoringSessionStatus) {
   }
 }
 
-function getPreviewCardClassName(isCameraActive: boolean, isHealthyPosture: boolean | null) {
+function getPreviewCardClassName(
+  isCameraActive: boolean,
+  status: MonitoringSessionStatus,
+  isHealthyPosture: boolean | null,
+) {
   if (!isCameraActive) {
     return "monitoringPreviewCard monitoringPreviewCard_paused";
+  }
+
+  if (status !== "live") {
+    return "monitoringPreviewCard monitoringPreviewCard_active";
   }
 
   if (isHealthyPosture === true) {

@@ -6,6 +6,7 @@ interface CameraPreviewProps {
   videoRef: (node: HTMLVideoElement | null) => void;
   canvasRef: (node: HTMLCanvasElement | null) => void;
   status: MonitoringSessionStatus;
+  calibrationCountdown: number | null;
   calibrationProgress: number;
   errorMessage: string | null;
 }
@@ -14,13 +15,19 @@ export function CameraPreview({
   videoRef,
   canvasRef,
   status,
+  calibrationCountdown,
   calibrationProgress,
   errorMessage,
 }: CameraPreviewProps) {
   return (
     <div className="monitoringVideoShell">
       <VideoCanvas videoRef={videoRef} canvasRef={canvasRef} />
-      <InferenceOverlay calibrationProgress={calibrationProgress} errorMessage={errorMessage} status={status} />
+      <InferenceOverlay
+        calibrationCountdown={calibrationCountdown}
+        calibrationProgress={calibrationProgress}
+        errorMessage={errorMessage}
+        status={status}
+      />
     </div>
   );
 }

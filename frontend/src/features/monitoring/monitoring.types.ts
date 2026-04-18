@@ -11,7 +11,14 @@ export interface ValidationData {
   keypoints: ValidKeypoints;
 }
 
-export type MonitoringSessionStatus = "idle" | "connecting" | "live" | "calibrating" | "error";
+export type MonitoringSessionStatus =
+  | "idle"
+  | "connecting"
+  | "needs_calibration"
+  | "calibration_countdown"
+  | "live"
+  | "calibrating"
+  | "error";
 
 export interface MonitoringUiState {
   isCameraActive: boolean;
