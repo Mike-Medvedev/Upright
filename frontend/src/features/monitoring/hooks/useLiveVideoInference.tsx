@@ -27,7 +27,6 @@ export function useLiveVideoInference() {
     [cameraStream, resize],
   );
   const onData = useEffectEvent((data: WebRTCOutputData): void => {
-    console.log("Predictions", data);
     const { width, height } = getCanvasDimensions();
     if (isLoading) setLoading(false);
     const { validatedFrame, error } = monitoringService.parseFrame(data);
@@ -82,24 +81,18 @@ export function useLiveVideoInference() {
         return;
       }
     }
-    if (monitoringService.isCalibrating) {
-      if (calibrationData?.progress) {
-        setProgress(monitoringService.progress);
-        reset();
-        drawText({
-          text: `${monitoringService.progress}`,
-          color: "blue",
-          point: { x: 15, y: 200 },
-        });
-      }
-      if (calibrationData?.isComplete) {
+    if (calibrationData != null) {
+      reset();
+      drawText({
+        text: `Calibrating... ${calibrationData.progress}%`,
+        color: "blue",
+        point: { x: 15, y: 200 },
+      });
+      if (calibrationData.isComplete) {
         setProgress(100);
         setCalibrating(false);
-        drawText({
-          text: "CALIBRATION COMPLETED!",
-          color: "green",
-          point: { x: 50, y: 50 },
-        });
+      } else {
+        setProgress(calibrationData.progress);
       }
       return;
     }

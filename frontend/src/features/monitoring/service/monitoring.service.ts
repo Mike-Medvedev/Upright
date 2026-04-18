@@ -21,7 +21,7 @@ export class MonitoringService {
 
   constructor() {
     this.buffer = new SlidingWindowBuffer();
-    this.calibrationBuffer = new CalibrationBuffer(600);
+    this.calibrationBuffer = new CalibrationBuffer(150);
   }
 
   parseFrame(
@@ -66,12 +66,11 @@ export class MonitoringService {
 
     if (this._isCalibrating) {
       this.calibrationBuffer.push(keypoints);
-
       if (this.calibrationBuffer.isFull) {
         this.calibratedHeight = this.calibrationBuffer.calibratedHeight;
+        console.log("Calibrated Height: ", this.calibratedHeight);
         this._isCalibrating = false;
       }
-
       return {
         data: null,
         error: null,
@@ -99,7 +98,7 @@ export class MonitoringService {
 
   startCalibration() {
     // reset buffer by creating a fresh one
-    this.calibrationBuffer = new CalibrationBuffer(600);
+    this.calibrationBuffer = new CalibrationBuffer(150);
     this._isCalibrating = true;
   }
 

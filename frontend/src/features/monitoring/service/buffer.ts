@@ -36,7 +36,10 @@ export class CalibrationBuffer extends Buffer {
   }
 
   push({ nose, lShoulder, rShoulder }: ValidKeypoints) {
-    if (this.isFull) return;
+    if (this.isFull) {
+      console.log("CALIBRATION BUFFER FULL!");
+      return;
+    }
     const height = (lShoulder.y + rShoulder.y) / 2 - nose.y;
     if (height === 0) return;
     this._buffer.push(height);
