@@ -8,8 +8,11 @@ import {
 const MONITORING_ALERT_PREFERENCES_STORAGE_KEY = "upright.monitoring.alert-preferences";
 const BAD_POSTURE_NOTIFICATION_TAG = "upright-bad-posture-alert";
 const BAD_POSTURE_AUDIO_URL = `${import.meta.env.BASE_URL}bad_posture.mp3`;
+/** Short silent clip. Used only to unlock playback on a user gesture — not the alert clip. */
+const SILENT_PRIME_AUDIO_URL = `${import.meta.env.BASE_URL}silent.mp3`;
 
 let badPostureAudio: HTMLAudioElement | null = null;
+let silentPrimeAudio: HTMLAudioElement | null = null;
 
 function getBadPostureAudio(): HTMLAudioElement | null {
   if (typeof window === "undefined" || typeof Audio === "undefined") {
@@ -22,6 +25,19 @@ function getBadPostureAudio(): HTMLAudioElement | null {
   }
 
   return badPostureAudio;
+}
+
+function getSilentPrimeAudio(): HTMLAudioElement | null {
+  if (typeof window === "undefined" || typeof Audio === "undefined") {
+    return null;
+  }
+
+  if (!silentPrimeAudio) {
+    silentPrimeAudio = new Audio(SILENT_PRIME_AUDIO_URL);
+    silentPrimeAudio.preload = "auto";
+  }
+
+  return silentPrimeAudio;
 }
 
 function hasVoiceAlertSupport() {
@@ -93,24 +109,25 @@ export const monitoringAlertsService = {
     return Notification.requestPermission();
   },
 
+  /**
+   * Run during a user gesture (e.g. start camera, enable sound). Mobile browsers require
+   * activation before audio can play; iOS also ignores `volume` on media elements, so we must
+   * not prime with the real alert file — use a silent clip instead.
+   */
   primeVoiceAlert() {
-    const audio = getBadPostureAudio();
-    if (!audio) {
+    const silent = getSilentPrimeAudio();
+    if (!silent) {
       return false;
     }
 
-    const previousVolume = audio.volume;
-    audio.volume = 0;
-    void audio
+    silent.currentTime = 0;
+    void silent
       .play()
       .then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.volume = previousVolume;
+        silent.pause();
+        silent.currentTime = 0;
       })
-      .catch(() => {
-        audio.volume = previousVolume;
-      });
+      .catch(() => {});
 
     return true;
   },
