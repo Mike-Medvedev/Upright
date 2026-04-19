@@ -18,14 +18,21 @@ export class MonitoringService {
   private videoDimensions: { width: number; height: number } = { width: 0, height: 0 };
   private calibratedHeight: number = 0;
   private calibratedEarAsymmetry: number | null = null;
+  private calibratedBoxDiagonal: number | null = null;
   private liveEarAsymmetryBuffer: number[] = [];
   private liveEarAsymmetryTotal: number = 0;
+  private liveBoxDiagonalBuffer: number[] = [];
+  private liveBoxDiagonalTotal: number = 0;
   private calibrationEarAsymmetryCount: number = 0;
   private calibrationEarAsymmetryTotal: number = 0;
+  private calibrationBoxDiagonalCount: number = 0;
+  private calibrationBoxDiagonalTotal: number = 0;
   private _isCalibrating: boolean = false;
   private readonly POSTURE_TOLERANCE: number = 0.1;
   private readonly EAR_ASYMMETRY_TOLERANCE: number = 0.08;
   private readonly EAR_ASYMMETRY_WINDOW_SIZE: number = 30;
+  private readonly BOX_DIAGONAL_TOLERANCE: number = 0.15;
+  private readonly BOX_DIAGONAL_WINDOW_SIZE: number = 20;
 
   constructor() {
     this.buffer = new SlidingWindowBuffer();
@@ -72,7 +79,8 @@ export class MonitoringService {
     | { data: null; error: InferenceError; calibration: null }
     | { data: null; error: null; calibration: { progress: number; isComplete: boolean } } {
     const scaledFrame = this.scaleFrame(frame);
-    const rawKeypoints = scaledFrame.output.predictions[0].keypoints;
+    const prediction = scaledFrame.output.predictions[0];
+    const rawKeypoints = prediction.keypoints;
     const { keypoints, error } = this.extractKeypoints(rawKeypoints);
 
     if (error) return { data: null, error, calibration: null };
@@ -80,12 +88,17 @@ export class MonitoringService {
     if (this._isCalibrating) {
       this.calibrationBuffer.push(keypoints);
       this.recordCalibrationEarAsymmetry(keypoints);
+      this.recordCalibrationBoxDiagonal(prediction);
       if (this.calibrationBuffer.isFull) {
         this.calibratedHeight = this.calibrationBuffer.calibratedHeight;
         this.calibratedEarAsymmetry =
           this.calibrationEarAsymmetryCount === 0
             ? null
             : this.calibrationEarAsymmetryTotal / this.calibrationEarAsymmetryCount;
+        this.calibratedBoxDiagonal =
+          this.calibrationBoxDiagonalCount === 0
+            ? null
+            : this.calibrationBoxDiagonalTotal / this.calibrationBoxDiagonalCount;
         console.log("Calibrated Height: ", this.calibratedHeight);
         this._isCalibrating = false;
       }
@@ -100,7 +113,13 @@ export class MonitoringService {
     }
 
     const isHealthyPosture = this.validatePosture(keypoints);
-    return { data: { isHealthyPosture, keypoints }, error: null, calibration: null };
+    const frameDistanceStatus = this.validateFrameBounds(prediction);
+    const isWithinFrameBounds = frameDistanceStatus === "within_bounds";
+    return {
+      data: { isHealthyPosture, isWithinFrameBounds, frameDistanceStatus, keypoints },
+      error: null,
+      calibration: null,
+    };
   }
 
   get progress() {
@@ -118,6 +137,7 @@ export class MonitoringService {
     this.buffer = new SlidingWindowBuffer();
     this.calibrationBuffer = new CalibrationBuffer(150);
     this.resetEarAsymmetryTracking();
+    this.resetBoxDiagonalTracking();
     this._isCalibrating = true;
   }
 
@@ -126,6 +146,7 @@ export class MonitoringService {
     this.calibrationBuffer = new CalibrationBuffer(150);
     this.calibratedHeight = 0;
     this.resetEarAsymmetryTracking();
+    this.resetBoxDiagonalTracking();
     this._isCalibrating = false;
   }
 
@@ -223,6 +244,65 @@ export class MonitoringService {
     this.calibrationEarAsymmetryTotal = 0;
   }
 
+  private validateFrameBounds(prediction: Prediction) {
+    const boxDiagonal = this.getBoxDiagonal(prediction);
+    if (boxDiagonal == null) {
+      return "within_bounds";
+    }
+
+    this.liveBoxDiagonalBuffer.push(boxDiagonal);
+    this.liveBoxDiagonalTotal += boxDiagonal;
+
+    if (this.liveBoxDiagonalBuffer.length > this.BOX_DIAGONAL_WINDOW_SIZE) {
+      const removedDiagonal = this.liveBoxDiagonalBuffer.shift()!;
+      this.liveBoxDiagonalTotal -= removedDiagonal;
+    }
+
+    if (this.calibratedBoxDiagonal == null) {
+      return "within_bounds";
+    }
+
+    const averageBoxDiagonal = this.liveBoxDiagonalTotal / this.liveBoxDiagonalBuffer.length;
+    const minimumAllowedDiagonal = this.calibratedBoxDiagonal * (1 - this.BOX_DIAGONAL_TOLERANCE);
+    const maximumAllowedDiagonal = this.calibratedBoxDiagonal * (1 + this.BOX_DIAGONAL_TOLERANCE);
+
+    if (averageBoxDiagonal < minimumAllowedDiagonal) {
+      return "too_far";
+    }
+
+    if (averageBoxDiagonal > maximumAllowedDiagonal) {
+      return "too_close";
+    }
+
+    return "within_bounds";
+  }
+
+  private recordCalibrationBoxDiagonal(prediction: Prediction) {
+    const boxDiagonal = this.getBoxDiagonal(prediction);
+    if (boxDiagonal == null) {
+      return;
+    }
+
+    this.calibrationBoxDiagonalTotal += boxDiagonal;
+    this.calibrationBoxDiagonalCount += 1;
+  }
+
+  private getBoxDiagonal(prediction: Prediction) {
+    if (!prediction.width || !prediction.height) {
+      return null;
+    }
+
+    return Math.hypot(prediction.width, prediction.height);
+  }
+
+  private resetBoxDiagonalTracking() {
+    this.calibratedBoxDiagonal = null;
+    this.liveBoxDiagonalBuffer = [];
+    this.liveBoxDiagonalTotal = 0;
+    this.calibrationBoxDiagonalCount = 0;
+    this.calibrationBoxDiagonalTotal = 0;
+  }
+
   private scaleFrame(frame: ValidatedFrame): ValidatedFrame {
     const scaleX = this.videoDimensions.width / frame.output.image.width;
     const scaleY = this.videoDimensions.height / frame.output.image.height;
@@ -230,8 +310,10 @@ export class MonitoringService {
     const scaledPredictions = frame.output.predictions.map((prediction) => {
       return {
         ...prediction,
-        x: prediction.x! * scaleX,
-        y: prediction.y! * scaleY,
+        x: prediction.x == null ? prediction.x : prediction.x * scaleX,
+        y: prediction.y == null ? prediction.y : prediction.y * scaleY,
+        width: prediction.width == null ? prediction.width : prediction.width * scaleX,
+        height: prediction.height == null ? prediction.height : prediction.height * scaleY,
         keypoints: prediction.keypoints!.map((k) => ({
           ...k,
           x: k.x * scaleX,

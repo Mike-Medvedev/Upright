@@ -154,8 +154,17 @@ export function useLiveVideoInference(isActive: boolean) {
     const displayLeftShoulder = mapPointToDisplaySpace({ x: lShoulder.x, y: lShoulder.y });
     const displayRightShoulder = mapPointToDisplaySpace({ x: rShoulder.x, y: rShoulder.y });
     setHealthyPosture(postureData.isHealthyPosture);
-    setHeaderMessage(postureData.isHealthyPosture ? "Healthy posture" : "Unhealthy posture");
-    setHeaderMessageTone(postureData.isHealthyPosture ? "success" : "warning");
+    if (!postureData.isWithinFrameBounds) {
+      setHeaderMessage(
+        postureData.frameDistanceStatus === "too_close"
+          ? "Move farther back in frame"
+          : "Move closer into frame",
+      );
+      setHeaderMessageTone("warning");
+    } else {
+      setHeaderMessage(postureData.isHealthyPosture ? "Healthy posture" : "Unhealthy posture");
+      setHeaderMessageTone(postureData.isHealthyPosture ? "success" : "warning");
+    }
     reset();
     drawEdge({
       color: postureData.isHealthyPosture ? "rgba(64, 192, 87, 0.95)" : "rgba(250, 82, 82, 0.95)",
