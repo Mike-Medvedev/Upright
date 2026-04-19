@@ -18,7 +18,7 @@ export class MonitoringService {
   private videoDimensions: { width: number; height: number } = { width: 0, height: 0 };
   private calibratedHeight: number = 0;
   private _isCalibrating: boolean = false;
-  private readonly HEALTHY_POSTURE_HEIGHT_DEVIATION: number = 0.9;
+  private readonly POSTURE_TOLERANCE: number = 0.1;
 
   constructor() {
     this.buffer = new SlidingWindowBuffer();
@@ -73,8 +73,7 @@ export class MonitoringService {
     if (this._isCalibrating) {
       this.calibrationBuffer.push(keypoints);
       if (this.calibrationBuffer.isFull) {
-        this.calibratedHeight =
-          this.calibrationBuffer.calibratedHeight * this.HEALTHY_POSTURE_HEIGHT_DEVIATION;
+        this.calibratedHeight = this.calibrationBuffer.calibratedHeight;
         console.log("Calibrated Height: ", this.calibratedHeight);
         this._isCalibrating = false;
       }
@@ -141,7 +140,7 @@ export class MonitoringService {
 
   private validatePosture(keypoints: ValidKeypoints) {
     this.buffer.push(keypoints);
-    return this.buffer.averagePostureHeight > this.calibratedHeight;
+    return this.buffer.averagePostureHeight > (this.calibratedHeight * (1 - this.POSTURE_TOLERANCE)) && this.buffer.averagePostureHeight < (this.calibratedHeight * (1 + this.POSTURE_TOLERANCE));
   }
 
   private scaleFrame(frame: ValidatedFrame): ValidatedFrame {
