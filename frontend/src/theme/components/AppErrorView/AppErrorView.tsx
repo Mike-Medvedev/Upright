@@ -10,6 +10,40 @@ interface AppErrorViewProps {
   title?: string;
 }
 
+export function AppErrorView({ actionLabel, error, onAction, title }: AppErrorViewProps) {
+  const resolvedTitle = title ?? getTitle(error);
+  const details = getErrorDetails(error);
+
+  return (
+    <div className="appErrorView">
+      <div className="panel">
+        <span className="eyebrow">Upright</span>
+        <Stack gap="sm">
+          <Title order={1}>{resolvedTitle}</Title>
+          <Text c="dimmed">{getMessage(error)}</Text>
+        </Stack>
+
+        <Group className="actions">
+          {onAction ? <Button onClick={onAction}>{actionLabel ?? "Try again"}</Button> : null}
+          <Button component={Link} to="/home" variant="light">
+            Go home
+          </Button>
+          <Button component={Link} to="/login" variant="default">
+            Back to login
+          </Button>
+        </Group>
+
+        {details ? (
+          <details className="details">
+            <summary className="detailsSummary">Technical details</summary>
+            <pre className="detailsContent">{details}</pre>
+          </details>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function getMessage(error: unknown) {
   if (error instanceof NotFoundError) {
     return "The page or resource you requested could not be found.";
@@ -44,38 +78,4 @@ function getErrorDetails(error: unknown) {
   }
 
   return null;
-}
-
-export function AppErrorView({ actionLabel, error, onAction, title }: AppErrorViewProps) {
-  const resolvedTitle = title ?? getTitle(error);
-  const details = getErrorDetails(error);
-
-  return (
-    <div className="appErrorView">
-      <div className="panel">
-        <span className="eyebrow">Upright</span>
-        <Stack gap="sm">
-          <Title order={1}>{resolvedTitle}</Title>
-          <Text c="dimmed">{getMessage(error)}</Text>
-        </Stack>
-
-        <Group className="actions">
-          {onAction ? <Button onClick={onAction}>{actionLabel ?? "Try again"}</Button> : null}
-          <Button component={Link} to="/home" variant="light">
-            Go home
-          </Button>
-          <Button component={Link} to="/login" variant="default">
-            Back to login
-          </Button>
-        </Group>
-
-        {details ? (
-          <details className="details">
-            <summary className="detailsSummary">Technical details</summary>
-            <pre className="detailsContent">{details}</pre>
-          </details>
-        ) : null}
-      </div>
-    </div>
-  );
 }
