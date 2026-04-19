@@ -7,14 +7,25 @@ import {
 
 const MONITORING_ALERT_PREFERENCES_STORAGE_KEY = "upright.monitoring.alert-preferences";
 const BAD_POSTURE_NOTIFICATION_TAG = "upright-bad-posture-alert";
-const BAD_POSTURE_ALERT_SPEECH_TEXT = "Bad posture detected";
+const BAD_POSTURE_AUDIO_URL = `${import.meta.env.BASE_URL}bad_posture.mp3`;
+
+let badPostureAudio: HTMLAudioElement | null = null;
+
+function getBadPostureAudio(): HTMLAudioElement | null {
+  if (typeof window === "undefined" || typeof Audio === "undefined") {
+    return null;
+  }
+
+  if (!badPostureAudio) {
+    badPostureAudio = new Audio(BAD_POSTURE_AUDIO_URL);
+    badPostureAudio.preload = "auto";
+  }
+
+  return badPostureAudio;
+}
 
 function hasVoiceAlertSupport() {
-  return (
-    typeof window !== "undefined" &&
-    "speechSynthesis" in window &&
-    typeof SpeechSynthesisUtterance !== "undefined"
-  );
+  return typeof window !== "undefined" && typeof Audio !== "undefined";
 }
 
 function hasDesktopNotificationSupport() {
@@ -27,21 +38,6 @@ function shouldShowDesktopNotification() {
   }
 
   return document.visibilityState === "hidden" || !document.hasFocus();
-}
-
-function getPreferredAlertVoice() {
-  if (!hasVoiceAlertSupport()) {
-    return null;
-  }
-
-  const availableVoices = window.speechSynthesis.getVoices();
-
-  return (
-    availableVoices.find((voice) => voice.lang.toLowerCase().startsWith("en-us")) ??
-    availableVoices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ??
-    availableVoices[0] ??
-    null
-  );
 }
 
 export const monitoringAlertsService = {
@@ -98,11 +94,24 @@ export const monitoringAlertsService = {
   },
 
   primeVoiceAlert() {
-    if (!hasVoiceAlertSupport()) {
+    const audio = getBadPostureAudio();
+    if (!audio) {
       return false;
     }
 
-    window.speechSynthesis.getVoices();
+    const previousVolume = audio.volume;
+    audio.volume = 0;
+    void audio
+      .play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = previousVolume;
+      })
+      .catch(() => {
+        audio.volume = previousVolume;
+      });
+
     return true;
   },
 
@@ -111,20 +120,13 @@ export const monitoringAlertsService = {
       return false;
     }
 
-    const utterance = new SpeechSynthesisUtterance(BAD_POSTURE_ALERT_SPEECH_TEXT);
-    const preferredVoice = getPreferredAlertVoice();
-
-    utterance.lang = preferredVoice?.lang ?? "en-US";
-    utterance.pitch = 1;
-    utterance.rate = 1;
-    utterance.volume = 1;
-
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+    const audio = getBadPostureAudio();
+    if (!audio) {
+      return false;
     }
 
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+    audio.currentTime = 0;
+    void audio.play().catch(() => {});
     return true;
   },
 
