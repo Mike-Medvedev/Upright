@@ -7,6 +7,8 @@ RUN npm ci
 
 COPY . .
 
+# Inject env vars from Github actions during build time since  
+
 ARG VITE_API_URL
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY
@@ -21,7 +23,7 @@ ENV VITE_ROBOFLOW_WORKFLOW_ID=$VITE_ROBOFLOW_WORKFLOW_ID
 
 RUN npm run build
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.28-alpine AS runtime
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html

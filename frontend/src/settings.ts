@@ -1,3 +1,9 @@
+/**
+ * This module validates environment variables at runtime when the first application starts
+ * If any variables defined in the zod schema are missing or malformed
+ * the application will fail, preventing future failures from missing envs
+ */
+
 import { z } from "zod/v4";
 import { ConfigurationError } from "@/lib/errors";
 
@@ -23,4 +29,8 @@ if (!parsedSettings.success) {
   });
 }
 
+/**
+ * Validated application configuration settings.
+ * @throws {ConfigurationError} If environment variables fail validation at runtime.
+ */
 export const settings = parsedSettings.data;
