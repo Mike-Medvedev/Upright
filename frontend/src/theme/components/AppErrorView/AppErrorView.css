@@ -6,7 +6,7 @@
   color: #e4e4e7;
   display: flex;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 24px;
 }
 
@@ -35,6 +35,7 @@
   display: flex;
   gap: 12px;
   margin-top: 24px;
+  flex-wrap: wrap;
 }
 
 .details {
@@ -56,4 +57,19 @@
   overflow-x: auto;
   padding: 16px;
   white-space: pre-wrap;
+}
+
+@media (max-width: 36em) {
+  .appErrorView {
+    padding: 16px;
+  }
+
+  .panel {
+    border-radius: 20px;
+    padding: 24px 18px;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
 }

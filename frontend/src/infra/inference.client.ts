@@ -1,5 +1,9 @@
 import { connectors, webrtc, type WebRTCOutputData } from "@roboflow/inference-sdk";
+import { InferenceConnectionError } from "@/lib/errors";
 import { settings } from "@/settings";
+
+const inferenceProxyUrl = new URL("/init-webrtc", settings.apiUrl).toString();
+
 const workflowsParameters = {
   is_calibrating: false,
   baseline_height: 100,
@@ -26,16 +30,23 @@ class InferenceClient {
     video: MediaStream,
     onData: (data: WebRTCOutputData) => void,
   ): Promise<webrtc.RFWebRTCConnection> {
-    const connector = connectors.withProxyUrl("/api/init-webrtc");
+    try {
+      const connector = connectors.withProxyUrl(inferenceProxyUrl);
 
-    this.connection = await webrtc.useStream({
-      source: video,
-      connector,
-      wrtcParams: wrtcParams,
-      onData,
-    });
+      this.connection = await webrtc.useStream({
+        source: video,
+        connector,
+        wrtcParams: wrtcParams,
+        onData,
+      });
 
-    return this.connection;
+      return this.connection;
+    } catch (error) {
+      throw new InferenceConnectionError(
+        "The inference API is unavailable. Check your connection and try again.",
+        error,
+      );
+    }
   }
   stop() {
     this.connection?.cleanup();

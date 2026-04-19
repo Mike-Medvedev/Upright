@@ -1,6 +1,7 @@
-import { AppShell, Avatar, Box, Group, Loader, Menu, NavLink, Stack, Text, Title } from "@mantine/core";
+import { AppShell, Avatar, Box, Burger, Group, Loader, Menu, NavLink, Stack, Text, Title } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { IconChartBar, IconSettings, IconVideo } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import { MonitoringProvider } from "@/features/monitoring/context/monitoring.provider";
 import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from "react-router";
@@ -39,9 +40,15 @@ function AppLayoutShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMobileNavbarOpen, { close: closeMobileNavbar, toggle: toggleMobileNavbar }] =
+    useDisclosure(false);
 
   const email = user?.email ?? "";
   const avatarLetter = getAvatarLetter(email);
+
+  useEffect(() => {
+    closeMobileNavbar();
+  }, [closeMobileNavbar, location.pathname]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -58,12 +65,20 @@ function AppLayoutShell() {
     <AppShell
       classNames={{ root: "appLayoutRoot" }}
       header={{ height: 56 }}
-      navbar={{ breakpoint: "sm", width: 260 }}
-      padding="md"
+      navbar={{ breakpoint: "sm", collapsed: { mobile: !isMobileNavbarOpen }, width: 260 }}
+      padding={{ base: "sm", sm: "md" }}
     >
       <AppShell.Header className="appLayoutHeader">
         <Group className="appLayoutHeaderInner" justify="space-between" wrap="nowrap">
-          <Group gap="sm" wrap="nowrap">
+          <Group className="appLayoutHeaderBrand" gap="sm" wrap="nowrap">
+            <Burger
+              aria-label={isMobileNavbarOpen ? "Close navigation" : "Open navigation"}
+              className="appLayoutBurger"
+              hiddenFrom="sm"
+              onClick={toggleMobileNavbar}
+              opened={isMobileNavbarOpen}
+              size="sm"
+            />
             <AppLogo />
             <Title className="appLayoutTitle" order={3}>
               Upright
@@ -125,6 +140,7 @@ function AppLayoutShell() {
               component={RouterNavLink}
               label="Monitoring"
               leftSection={<IconVideo className="appLayoutNavIcon" size={18} stroke={1.5} />}
+              onClick={closeMobileNavbar}
               rightSection={
                 <span
                   aria-hidden="true"
@@ -141,6 +157,7 @@ function AppLayoutShell() {
               component={RouterNavLink}
               label="Analytics"
               leftSection={<IconChartBar className="appLayoutNavIcon" size={18} stroke={1.5} />}
+              onClick={closeMobileNavbar}
               to="/analytics"
               variant="subtle"
             />
@@ -152,6 +169,7 @@ function AppLayoutShell() {
             component={RouterNavLink}
             label="Settings"
             leftSection={<IconSettings className="appLayoutNavIcon" size={18} stroke={1.5} />}
+            onClick={closeMobileNavbar}
             to="/settings"
             variant="subtle"
           />

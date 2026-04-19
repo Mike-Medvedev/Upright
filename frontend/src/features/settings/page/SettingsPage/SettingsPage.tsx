@@ -67,7 +67,7 @@ export function SettingsPage() {
           Choose how Upright should alert you when bad posture lasts for a few seconds.
         </Text>
 
-        <Group className="settingsToggleRow" justify="space-between" wrap="nowrap">
+        <Group className="settingsToggleRow" justify="space-between" wrap="wrap">
           <div className="settingsToggleCopy">
             <Text fw={600}>Voice alert</Text>
             <Text c="dimmed" size="sm">
@@ -77,11 +77,12 @@ export function SettingsPage() {
           <Switch
             aria-label="Enable posture voice alerts"
             checked={alertPreferences.soundEnabled}
+            className="settingsToggleSwitch"
             onChange={(event) => handleSoundToggle(event.currentTarget.checked)}
           />
         </Group>
 
-        <Group className="settingsToggleRow" justify="space-between" wrap="nowrap">
+        <Group className="settingsToggleRow" justify="space-between" wrap="wrap">
           <div className="settingsToggleCopy">
             <Text fw={600}>Desktop notifications</Text>
             <Text c="dimmed" size="sm">
@@ -107,6 +108,7 @@ export function SettingsPage() {
           <Switch
             aria-label="Enable desktop posture notifications"
             checked={alertPreferences.desktopNotificationsEnabled}
+            className="settingsToggleSwitch"
             disabled={isRequestingNotificationPermission}
             onChange={(event) => {
               void handleDesktopNotificationsToggle(event.currentTarget.checked);

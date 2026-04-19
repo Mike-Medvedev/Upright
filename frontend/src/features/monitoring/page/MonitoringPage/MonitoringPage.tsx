@@ -4,6 +4,7 @@ import { CameraPreview } from "@/features/monitoring/components/CameraPreview";
 import { useLiveVideoInference } from "@/features/monitoring/hooks/useLiveVideoInference";
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
+import { InferenceConnectionError, LocalCameraError } from "@/lib/errors";
 import "./MonitoringPage.css";
 
 export function MonitoringPage() {
@@ -26,9 +27,11 @@ export function MonitoringPage() {
       return;
     }
 
+    const nextErrorMessage = getMonitoringErrorMessage(error);
+
     syncState({
       calibrationProgress,
-      errorMessage: error?.message ?? null,
+      errorMessage: nextErrorMessage,
       status,
     });
   }, [calibrationProgress, error, state.isCameraActive, status, syncState]);
@@ -37,7 +40,7 @@ export function MonitoringPage() {
 
   const isCameraActive = state.isCameraActive;
   const currentStatus = isCameraActive ? status : state.status;
-  const currentErrorMessage = isCameraActive ? error?.message ?? null : state.errorMessage;
+  const currentErrorMessage = isCameraActive ? getMonitoringErrorMessage(error) : state.errorMessage;
   const isCalibrating = currentStatus === "calibrating";
   const isCalibrationCountdown = currentStatus === "calibration_countdown";
   const canCalibrate =
@@ -132,6 +135,22 @@ function getHeaderMessage(
     case "error":
       return errorMessage ?? "The camera could not be started. Check permissions and try again.";
   }
+}
+
+function getMonitoringErrorMessage(error: Error | null) {
+  if (!error) {
+    return null;
+  }
+
+  if (error instanceof LocalCameraError) {
+    return "The camera could not be started. Check camera permissions and try again.";
+  }
+
+  if (error instanceof InferenceConnectionError) {
+    return "The inference API is unavailable. Check your connection and try again.";
+  }
+
+  return "We could not start posture monitoring. Please try again.";
 }
 
 function getHeaderMessageTone(status: MonitoringSessionStatus) {

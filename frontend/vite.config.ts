@@ -30,19 +30,5 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "src"),
       },
     },
-    server: {
-      proxy: {
-        "/api": {
-          target: BASE_URL,
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ""),
-        },
-        "/ws": {
-          target: BASE_URL.replace(/http/, "ws"),
-          changeOrigin: true,
-          ws: true,
-        },
-      },
-    },
   };
 });

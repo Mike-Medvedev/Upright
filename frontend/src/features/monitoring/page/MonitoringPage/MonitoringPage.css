@@ -8,7 +8,7 @@
   margin-inline: auto;
   max-width: 1200px;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   width: 100%;
 }
 
@@ -23,6 +23,7 @@
   flex: 1;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
   transition:
     border-color 0.25s ease,
@@ -65,6 +66,7 @@
   line-height: 1.35;
   letter-spacing: -0.01em;
   max-width: 540px;
+  text-wrap: balance;
 }
 
 .monitoringPreviewTopTitle_warning {
@@ -86,6 +88,7 @@
   flex: 1 1 0;
   max-width: 100%;
   min-height: 360px;
+  min-width: 0;
   overflow: hidden;
   position: relative;
   transition:
@@ -241,13 +244,41 @@
 }
 
 @media (max-width: 48em) {
+  .monitoringPage {
+    justify-content: flex-start;
+  }
+
+  .monitoringPreviewTopBar {
+    padding: var(--mantine-spacing-sm);
+  }
+
+  .monitoringPreviewTopTitle {
+    font-size: 0.95rem;
+    max-width: none;
+  }
+
   .monitoringVideoShell {
-    min-height: 280px;
+    min-height: clamp(240px, 52vh, 320px);
   }
 
   .monitoringCalibrationOverlayRail {
+    margin-inline: auto;
     max-width: 280px;
     width: min(100%, 280px);
+  }
+}
+
+@media (max-width: 36em) {
+  .monitoringControlsBar {
+    padding: var(--mantine-spacing-sm);
+  }
+
+  .monitoringControlsBar :where(button) {
+    width: 100%;
+  }
+
+  .monitoringVideoPlaceholder {
+    padding: var(--mantine-spacing-md);
   }
 }
 

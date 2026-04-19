@@ -27,9 +27,9 @@ export default function InferenceOverlay({
     return (
       <div aria-live="polite" className="monitoringVideoOverlay monitoringVideoOverlay_dim">
         <Stack align="center" gap="xs">
-          <Text fw={600}>Camera Unavailable</Text>
+          <Text fw={600}>Monitoring Unavailable</Text>
           <Text c="dimmed" maw={360} size="sm">
-            {errorMessage ?? "Check camera permissions and try starting the session again."}
+            {errorMessage ?? "We could not start posture monitoring. Please try again."}
           </Text>
         </Stack>
       </div>

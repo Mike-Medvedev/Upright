@@ -41,6 +41,12 @@ export class LocalCameraError extends ApplicationError {
   }
 }
 
+export class InferenceConnectionError extends ApplicationError {
+  constructor(message: string, cause?: unknown) {
+    super(message, "INFERENCE_CONNECTION_ERROR", undefined, cause);
+  }
+}
+
 export class InferenceError extends ApplicationError<INFERENCE_ERROR_CODES> {
   constructor(code: INFERENCE_ERROR_CODES) {
     super(code, code);

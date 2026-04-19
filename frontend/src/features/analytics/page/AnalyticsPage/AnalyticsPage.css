@@ -1,5 +1,6 @@
 .analyticsPage {
   max-width: 1040px;
+  width: 100%;
 }
 
 .analyticsStat {
@@ -21,4 +22,14 @@
 .analyticsRingCopy {
   flex: 1;
   min-width: 200px;
+}
+
+@media (max-width: 48em) {
+  .analyticsStatValue {
+    font-size: 1.5rem;
+  }
+
+  .analyticsRingCopy {
+    min-width: 0;
+  }
 }

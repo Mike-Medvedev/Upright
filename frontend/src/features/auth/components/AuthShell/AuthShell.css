@@ -4,7 +4,7 @@
     radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.02), transparent 34%),
     linear-gradient(180deg, #0c0c0e 0%, #141416 100%);
   color: #e4e4e7;
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 24px;
 }
 
@@ -14,7 +14,7 @@
   justify-content: center;
   margin: 0 auto;
   max-width: 520px;
-  min-height: calc(100vh - 48px);
+  min-height: calc(100dvh - 48px);
 }
 
 .authShellCard {
@@ -54,4 +54,19 @@
   color: #8b8b93;
   font-size: 0.95rem;
   margin-top: 24px;
+}
+
+@media (max-width: 36em) {
+  .authShell {
+    padding: 16px;
+  }
+
+  .authShellCenter {
+    min-height: calc(100dvh - 32px);
+  }
+
+  .authShellCard {
+    border-radius: 20px;
+    padding: 24px 18px;
+  }
 }

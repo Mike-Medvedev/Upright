@@ -1,5 +1,6 @@
 .settingsPage {
   max-width: 560px;
+  width: 100%;
 }
 
 .settingsSection {
@@ -27,6 +28,7 @@
 
 .settingsToggleCopy {
   flex: 1;
+  min-width: 0;
 }
 
 .settingsSupportText {
@@ -54,4 +56,26 @@
 
 .settingsDeleteButton {
   max-width: 200px;
+}
+
+@media (max-width: 36em) {
+  .settingsSection {
+    padding: var(--mantine-spacing-sm);
+  }
+
+  .settingsToggleRow {
+    gap: var(--mantine-spacing-sm);
+    margin-top: var(--mantine-spacing-sm);
+    padding-top: var(--mantine-spacing-sm);
+  }
+
+  .settingsToggleSwitch {
+    align-self: flex-start;
+  }
+
+  .settingsNotificationTestButton,
+  .settingsDeleteButton {
+    max-width: none;
+    width: 100%;
+  }
 }

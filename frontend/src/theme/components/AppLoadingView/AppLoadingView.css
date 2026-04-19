@@ -6,7 +6,7 @@
   color: #e4e4e7;
   display: flex;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 24px;
 }
 
@@ -20,4 +20,15 @@
   padding: 32px;
   text-align: center;
   width: 100%;
+}
+
+@media (max-width: 36em) {
+  .appLoadingView {
+    padding: 16px;
+  }
+
+  .appLoadingPanel {
+    border-radius: 20px;
+    padding: 24px 18px;
+  }
 }
