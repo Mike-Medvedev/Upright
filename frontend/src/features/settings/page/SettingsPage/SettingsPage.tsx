@@ -29,10 +29,6 @@ export function SettingsPage() {
 
   const handleSoundToggle = (checked: boolean) => {
     updateAlertPreferences({ soundEnabled: checked });
-
-    if (checked) {
-      monitoringAlertsService.primeVoiceAlert();
-    }
   };
 
   const handleDesktopNotificationsToggle = async (checked: boolean) => {

@@ -28,14 +28,10 @@ export function MonitoringProvider({ children }: { children: React.ReactNode }) 
       errorMessage: null,
     });
 
-    if (alertPreferences.soundEnabled) {
-      monitoringAlertsService.primeVoiceAlert();
-    }
-
     if (alertPreferences.desktopNotificationsEnabled) {
       void monitoringAlertsService.requestDesktopNotificationPermission();
     }
-  }, [alertPreferences.desktopNotificationsEnabled, alertPreferences.soundEnabled]);
+  }, [alertPreferences.desktopNotificationsEnabled]);
 
   const stopCamera = useCallback(() => {
     setState(initialState);
