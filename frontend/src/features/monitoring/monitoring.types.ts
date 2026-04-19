@@ -8,12 +8,9 @@ export interface Keypoint {
   y: number;
 }
 
-export type FrameDistanceStatus = "within_bounds" | "too_close" | "too_far";
-
 export interface ValidationData {
   isHealthyPosture: boolean;
-  isWithinFrameBounds: boolean;
-  frameDistanceStatus: FrameDistanceStatus;
+  frameDistanceStatus: "within_bounds" | "too_close" | "too_far";
   keypoints: ValidKeypoints;
 }
 

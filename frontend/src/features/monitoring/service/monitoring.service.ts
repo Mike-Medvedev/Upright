@@ -13,16 +13,15 @@ import { InferenceError } from "@/lib/errors";
 
 //Todo: Ensure theres only one person in frame
 export class MonitoringService {
-  private buffer: SlidingWindowBuffer;
+  private noseShoulderHeightBuffer: SlidingWindowBuffer;
+  private liveEarAsymmetryBuffer: SlidingWindowBuffer;
+  private liveBoxDiagonalBuffer: SlidingWindowBuffer;
   private calibrationBuffer: CalibrationBuffer;
   private videoDimensions: { width: number; height: number } = { width: 0, height: 0 };
-  private calibratedHeight: number = 0;
+  private calibratedNoseShoulderHeight: number = 0;
   private calibratedEarAsymmetry: number | null = null;
   private calibratedBoxDiagonal: number | null = null;
-  private liveEarAsymmetryBuffer: number[] = [];
-  private liveEarAsymmetryTotal: number = 0;
-  private liveBoxDiagonalBuffer: number[] = [];
-  private liveBoxDiagonalTotal: number = 0;
+
   private calibrationEarAsymmetryCount: number = 0;
   private calibrationEarAsymmetryTotal: number = 0;
   private calibrationBoxDiagonalCount: number = 0;
@@ -35,8 +34,10 @@ export class MonitoringService {
   private readonly BOX_DIAGONAL_WINDOW_SIZE: number = 20;
 
   constructor() {
-    this.buffer = new SlidingWindowBuffer();
+    this.noseShoulderHeightBuffer = new SlidingWindowBuffer(30);
     this.calibrationBuffer = new CalibrationBuffer(150);
+    this.liveEarAsymmetryBuffer = new SlidingWindowBuffer(30);
+    this.liveBoxDiagonalBuffer = new SlidingWindowBuffer(30);
   }
 
   parseFrame(
@@ -45,7 +46,6 @@ export class MonitoringService {
     | { validatedFrame: ValidatedFrame; error: null }
     | { validatedFrame: null; error: InferenceError } {
     const raw = data.serialized_output_data as Frame;
-
 
     // Verify the structural hierarchy exists
     const hasPredictions = raw?.output?.predictions?.length > 0;
@@ -72,6 +72,7 @@ export class MonitoringService {
   setDimensions(dimensions: { width: number; height: number }) {
     this.videoDimensions = dimensions;
   }
+
   process(
     frame: ValidatedFrame,
   ):
@@ -90,7 +91,7 @@ export class MonitoringService {
       this.recordCalibrationEarAsymmetry(keypoints);
       this.recordCalibrationBoxDiagonal(prediction);
       if (this.calibrationBuffer.isFull) {
-        this.calibratedHeight = this.calibrationBuffer.calibratedHeight;
+        this.calibratedNoseShoulderHeight = this.calibrationBuffer.calibratedNoseShoulderHeight;
         this.calibratedEarAsymmetry =
           this.calibrationEarAsymmetryCount === 0
             ? null
@@ -99,7 +100,7 @@ export class MonitoringService {
           this.calibrationBoxDiagonalCount === 0
             ? null
             : this.calibrationBoxDiagonalTotal / this.calibrationBoxDiagonalCount;
-        console.log("Calibrated Height: ", this.calibratedHeight);
+        console.log("Calibrated Height: ", this.calibratedNoseShoulderHeight);
         this._isCalibrating = false;
       }
       return {
@@ -114,9 +115,8 @@ export class MonitoringService {
 
     const isHealthyPosture = this.validatePosture(keypoints);
     const frameDistanceStatus = this.validateFrameBounds(prediction);
-    const isWithinFrameBounds = frameDistanceStatus === "within_bounds";
     return {
-      data: { isHealthyPosture, isWithinFrameBounds, frameDistanceStatus, keypoints },
+      data: { isHealthyPosture, frameDistanceStatus, keypoints },
       error: null,
       calibration: null,
     };
@@ -134,17 +134,17 @@ export class MonitoringService {
   }
 
   startCalibration() {
-    this.buffer = new SlidingWindowBuffer();
-    this.calibrationBuffer = new CalibrationBuffer(150);
+    this.noseShoulderHeightBuffer.flush();
+    this.calibrationBuffer.flush();
     this.resetEarAsymmetryTracking();
     this.resetBoxDiagonalTracking();
     this._isCalibrating = true;
   }
 
   resetSession() {
-    this.buffer = new SlidingWindowBuffer();
-    this.calibrationBuffer = new CalibrationBuffer(150);
-    this.calibratedHeight = 0;
+    this.noseShoulderHeightBuffer.flush();
+    this.calibrationBuffer.flush();
+    this.calibratedNoseShoulderHeight = 0;
     this.resetEarAsymmetryTracking();
     this.resetBoxDiagonalTracking();
     this._isCalibrating = false;
@@ -180,12 +180,30 @@ export class MonitoringService {
   }
 
   private validatePosture(keypoints: ValidKeypoints) {
-    this.buffer.push(keypoints);
+    const normalizedNoseShoulderHeights = this.normalizeNoseShoulderPostureHeights(keypoints);
+
+    if (normalizedNoseShoulderHeights !== 0) {
+      this.noseShoulderHeightBuffer.push(normalizedNoseShoulderHeights);
+    }
+
     const hasHealthyPostureHeight =
-      this.buffer.averagePostureHeight > this.calibratedHeight * (1 - this.POSTURE_TOLERANCE) &&
-      this.buffer.averagePostureHeight < this.calibratedHeight * (1 + this.POSTURE_TOLERANCE);
+      this.noseShoulderHeightBuffer.average >
+        this.calibratedNoseShoulderHeight * (1 - this.POSTURE_TOLERANCE) &&
+      this.noseShoulderHeightBuffer.average <
+        this.calibratedNoseShoulderHeight * (1 + this.POSTURE_TOLERANCE);
     const hasHealthyHeadTilt = this.validateEarAsymmetry(keypoints);
     return hasHealthyPostureHeight && hasHealthyHeadTilt;
+  }
+
+  private normalizeNoseShoulderPostureHeights({
+    nose,
+    lShoulder,
+    rShoulder,
+  }: ValidKeypoints): number {
+    const framePostureheight = (lShoulder.y + rShoulder.y) / 2 - nose.y;
+    const shoulderWidth = Math.hypot(rShoulder.x - lShoulder.x, rShoulder.y - lShoulder.y);
+    if (framePostureheight <= 0 || shoulderWidth === 0) return 0;
+    return framePostureheight / shoulderWidth;
   }
 
   private validateEarAsymmetry(keypoints: ValidKeypoints) {
@@ -195,19 +213,15 @@ export class MonitoringService {
     }
 
     this.liveEarAsymmetryBuffer.push(asymmetry);
-    this.liveEarAsymmetryTotal += asymmetry;
-
-    if (this.liveEarAsymmetryBuffer.length > this.EAR_ASYMMETRY_WINDOW_SIZE) {
-      const removedAsymmetry = this.liveEarAsymmetryBuffer.shift()!;
-      this.liveEarAsymmetryTotal -= removedAsymmetry;
-    }
 
     if (this.calibratedEarAsymmetry == null) {
       return true;
     }
 
-    const averageEarAsymmetry = this.liveEarAsymmetryTotal / this.liveEarAsymmetryBuffer.length;
-    return averageEarAsymmetry <= this.calibratedEarAsymmetry + this.EAR_ASYMMETRY_TOLERANCE;
+    return (
+      this.liveEarAsymmetryBuffer.average <=
+      this.calibratedEarAsymmetry + this.EAR_ASYMMETRY_TOLERANCE
+    );
   }
 
   private recordCalibrationEarAsymmetry(keypoints: ValidKeypoints) {
@@ -238,39 +252,32 @@ export class MonitoringService {
 
   private resetEarAsymmetryTracking() {
     this.calibratedEarAsymmetry = null;
-    this.liveEarAsymmetryBuffer = [];
-    this.liveEarAsymmetryTotal = 0;
+    this.liveEarAsymmetryBuffer.flush();
+
     this.calibrationEarAsymmetryCount = 0;
     this.calibrationEarAsymmetryTotal = 0;
   }
 
-  private validateFrameBounds(prediction: Prediction) {
+  private validateFrameBounds(prediction: Prediction): ValidationData["frameDistanceStatus"] {
     const boxDiagonal = this.getBoxDiagonal(prediction);
     if (boxDiagonal == null) {
       return "within_bounds";
     }
 
     this.liveBoxDiagonalBuffer.push(boxDiagonal);
-    this.liveBoxDiagonalTotal += boxDiagonal;
-
-    if (this.liveBoxDiagonalBuffer.length > this.BOX_DIAGONAL_WINDOW_SIZE) {
-      const removedDiagonal = this.liveBoxDiagonalBuffer.shift()!;
-      this.liveBoxDiagonalTotal -= removedDiagonal;
-    }
 
     if (this.calibratedBoxDiagonal == null) {
       return "within_bounds";
     }
 
-    const averageBoxDiagonal = this.liveBoxDiagonalTotal / this.liveBoxDiagonalBuffer.length;
     const minimumAllowedDiagonal = this.calibratedBoxDiagonal * (1 - this.BOX_DIAGONAL_TOLERANCE);
     const maximumAllowedDiagonal = this.calibratedBoxDiagonal * (1 + this.BOX_DIAGONAL_TOLERANCE);
 
-    if (averageBoxDiagonal < minimumAllowedDiagonal) {
+    if (this.liveBoxDiagonalBuffer.average < minimumAllowedDiagonal) {
       return "too_far";
     }
 
-    if (averageBoxDiagonal > maximumAllowedDiagonal) {
+    if (this.liveBoxDiagonalBuffer.average > maximumAllowedDiagonal) {
       return "too_close";
     }
 
@@ -297,8 +304,7 @@ export class MonitoringService {
 
   private resetBoxDiagonalTracking() {
     this.calibratedBoxDiagonal = null;
-    this.liveBoxDiagonalBuffer = [];
-    this.liveBoxDiagonalTotal = 0;
+    this.liveBoxDiagonalBuffer.flush();
     this.calibrationBoxDiagonalCount = 0;
     this.calibrationBoxDiagonalTotal = 0;
   }

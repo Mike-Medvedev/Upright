@@ -26,7 +26,9 @@ export function useLiveVideoInference(isActive: boolean) {
   const [requiresCalibration, setRequiresCalibration] = useState<boolean>(false);
   const [hasCalibratedThisSession, setHasCalibratedThisSession] = useState<boolean>(false);
   const [headerMessage, setHeaderMessage] = useState<string | null>(null);
-  const [headerMessageTone, setHeaderMessageTone] = useState<"default" | "success" | "warning">("default");
+  const [headerMessageTone, setHeaderMessageTone] = useState<"default" | "success" | "warning">(
+    "default",
+  );
   const latestAlertPreferencesRef = useRef(alertPreferences);
   const latestIsHealthyPostureRef = useRef<boolean | null>(null);
   const latestStatusRef = useRef<MonitoringSessionStatus>("idle");
@@ -154,7 +156,7 @@ export function useLiveVideoInference(isActive: boolean) {
     const displayLeftShoulder = mapPointToDisplaySpace({ x: lShoulder.x, y: lShoulder.y });
     const displayRightShoulder = mapPointToDisplaySpace({ x: rShoulder.x, y: rShoulder.y });
     setHealthyPosture(postureData.isHealthyPosture);
-    if (!postureData.isWithinFrameBounds) {
+    if (postureData.frameDistanceStatus !== "within_bounds") {
       setHeaderMessage(
         postureData.frameDistanceStatus === "too_close"
           ? "Move farther back in frame"
@@ -314,7 +316,10 @@ export function useLiveVideoInference(isActive: boolean) {
         return;
       }
 
-      if (lastAlertAtRef.current !== null && now - lastAlertAtRef.current < BAD_POSTURE_ALERT_COOLDOWN_MS) {
+      if (
+        lastAlertAtRef.current !== null &&
+        now - lastAlertAtRef.current < BAD_POSTURE_ALERT_COOLDOWN_MS
+      ) {
         return;
       }
 
@@ -358,7 +363,9 @@ export function useLiveVideoInference(isActive: boolean) {
   };
 }
 
-function getInferenceHeaderState(error: InferenceError): { message: string; tone: "warning" } | null {
+function getInferenceHeaderState(
+  error: InferenceError,
+): { message: string; tone: "warning" } | null {
   switch (error.code) {
     case "MISSING_KEYPOINTS":
       return { message: "Please make sure both shoulders and head are in frame!", tone: "warning" };
