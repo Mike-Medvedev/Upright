@@ -73,7 +73,6 @@
   border-right: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
-  height: 100%;
   min-width: 0;
 }
 
@@ -115,7 +114,8 @@
   color: #f4f4f5 !important;
 }
 
-.appLayoutNavLink:not([data-active]):not([aria-current="page"]):hover:not([data-disabled]) .appLayoutNavIcon {
+.appLayoutNavLink:not([data-active]):not([aria-current="page"]):hover:not([data-disabled])
+  .appLayoutNavIcon {
   color: #d4d4d8 !important;
 }
 

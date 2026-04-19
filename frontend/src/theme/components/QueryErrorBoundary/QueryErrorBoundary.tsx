@@ -1,3 +1,8 @@
+/**
+ * This module allows tanstack query cache to reset its errors
+ * When a user tries to recover from an error on the websties error page
+ */
+
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import { AppErrorView } from "@/theme/components/AppErrorView/AppErrorView";
@@ -14,8 +19,7 @@ export function QueryErrorBoundary({ children }: QueryErrorBoundaryProps) {
       fallbackRender={({ error, resetErrorBoundary }) => (
         <AppErrorView actionLabel="Retry" error={error} onAction={resetErrorBoundary} />
       )}
-      onReset={reset}
-    >
+      onReset={reset}>
       {children}
     </ErrorBoundary>
   );

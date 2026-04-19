@@ -1,4 +1,16 @@
-import { AppShell, Avatar, Box, Burger, Group, Loader, Menu, NavLink, Stack, Text, Title } from "@mantine/core";
+import {
+  AppShell,
+  Avatar,
+  Box,
+  Burger,
+  Group,
+  Loader,
+  Menu,
+  NavLink,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconSettings, IconVideo } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -66,8 +78,7 @@ function AppLayoutShell() {
       classNames={{ root: "appLayoutRoot" }}
       header={{ height: 56 }}
       navbar={{ breakpoint: "sm", collapsed: { mobile: !isMobileNavbarOpen }, width: 260 }}
-      padding={{ base: "sm", sm: "md" }}
-    >
+      padding={{ base: "sm", sm: "md" }}>
       <AppShell.Header className="appLayoutHeader">
         <Group className="appLayoutHeaderInner" justify="space-between" wrap="nowrap">
           <Group className="appLayoutHeaderBrand" gap="sm" wrap="nowrap">
@@ -91,8 +102,7 @@ function AppLayoutShell() {
                 aria-label="Account menu"
                 className="appLayoutAvatarTrigger"
                 disabled={isLoggingOut}
-                type="button"
-              >
+                type="button">
                 {isLoggingOut ? (
                   <Loader color="grape" size="sm" />
                 ) : (
@@ -104,8 +114,7 @@ function AppLayoutShell() {
                     color="grape"
                     radius="xl"
                     size={32}
-                    variant="light"
-                  >
+                    variant="light">
                     {avatarLetter}
                   </Avatar>
                 )}

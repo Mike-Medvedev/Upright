@@ -1,5 +1,9 @@
 import { Button, Paper, TextInput, PasswordInput, createTheme } from "@mantine/core";
 
+/**
+ * Creates a custom mantine theme by defining overrides
+ * on top of the default mantine theme
+ */
 const theme = createTheme({
   black: "#0c0c0e",
   colors: {

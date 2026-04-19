@@ -1,6 +1,7 @@
 import "./index.css";
 import "@mantine/core/styles.css";
 import "@/infra/api.client";
+
 import { createRoot } from "react-dom/client";
 import { MantineProvider } from "@mantine/core";
 import { QueryClientProvider } from "@tanstack/react-query";
