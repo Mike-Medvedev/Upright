@@ -54,13 +54,15 @@ export interface MonitoringContextValue {
 }
 
 export type ValidKeypoint = Keypoint & {
-  class: "nose" | "left_shoulder" | "right_shoulder";
+  class: "nose" | "left_shoulder" | "right_shoulder" | "left_ear" | "right_ear";
 };
 
 export type ValidKeypoints = {
   nose: ValidKeypoint;
   lShoulder: ValidKeypoint;
   rShoulder: ValidKeypoint;
+  lEar?: ValidKeypoint;
+  rEar?: ValidKeypoint;
 };
 
 export interface Prediction {

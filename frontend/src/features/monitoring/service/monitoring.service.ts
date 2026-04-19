@@ -17,8 +17,15 @@ export class MonitoringService {
   private calibrationBuffer: CalibrationBuffer;
   private videoDimensions: { width: number; height: number } = { width: 0, height: 0 };
   private calibratedHeight: number = 0;
+  private calibratedEarAsymmetry: number | null = null;
+  private liveEarAsymmetryBuffer: number[] = [];
+  private liveEarAsymmetryTotal: number = 0;
+  private calibrationEarAsymmetryCount: number = 0;
+  private calibrationEarAsymmetryTotal: number = 0;
   private _isCalibrating: boolean = false;
   private readonly POSTURE_TOLERANCE: number = 0.1;
+  private readonly EAR_ASYMMETRY_TOLERANCE: number = 0.08;
+  private readonly EAR_ASYMMETRY_WINDOW_SIZE: number = 30;
 
   constructor() {
     this.buffer = new SlidingWindowBuffer();
@@ -31,7 +38,7 @@ export class MonitoringService {
     | { validatedFrame: ValidatedFrame; error: null }
     | { validatedFrame: null; error: InferenceError } {
     const raw = data.serialized_output_data as Frame;
-    console.log("Raw frame: ", raw);
+
 
     // Verify the structural hierarchy exists
     const hasPredictions = raw?.output?.predictions?.length > 0;
@@ -72,8 +79,13 @@ export class MonitoringService {
 
     if (this._isCalibrating) {
       this.calibrationBuffer.push(keypoints);
+      this.recordCalibrationEarAsymmetry(keypoints);
       if (this.calibrationBuffer.isFull) {
         this.calibratedHeight = this.calibrationBuffer.calibratedHeight;
+        this.calibratedEarAsymmetry =
+          this.calibrationEarAsymmetryCount === 0
+            ? null
+            : this.calibrationEarAsymmetryTotal / this.calibrationEarAsymmetryCount;
         console.log("Calibrated Height: ", this.calibratedHeight);
         this._isCalibrating = false;
       }
@@ -105,6 +117,7 @@ export class MonitoringService {
   startCalibration() {
     this.buffer = new SlidingWindowBuffer();
     this.calibrationBuffer = new CalibrationBuffer(150);
+    this.resetEarAsymmetryTracking();
     this._isCalibrating = true;
   }
 
@@ -112,6 +125,7 @@ export class MonitoringService {
     this.buffer = new SlidingWindowBuffer();
     this.calibrationBuffer = new CalibrationBuffer(150);
     this.calibratedHeight = 0;
+    this.resetEarAsymmetryTracking();
     this._isCalibrating = false;
   }
 
@@ -121,6 +135,8 @@ export class MonitoringService {
     let nose: ValidKeypoint | null = null;
     let lShoulder: ValidKeypoint | null = null;
     let rShoulder: ValidKeypoint | null = null;
+    let lEar: ValidKeypoint | undefined;
+    let rEar: ValidKeypoint | undefined;
     for (const k of keypoints) {
       if (k.class === "nose") {
         nose = k as ValidKeypoint;
@@ -128,6 +144,10 @@ export class MonitoringService {
         lShoulder = k as ValidKeypoint;
       } else if (k.class === "right_shoulder") {
         rShoulder = k as ValidKeypoint;
+      } else if (k.class === "left_ear") {
+        lEar = k as ValidKeypoint;
+      } else if (k.class === "right_ear") {
+        rEar = k as ValidKeypoint;
       }
     }
     if (!nose) return { keypoints: null, error: new InferenceError("MISSING_NOSE_KEYPOINT") };
@@ -135,12 +155,72 @@ export class MonitoringService {
       return { keypoints: null, error: new InferenceError("MISSING_LSHOULDER_KEYPOINT") };
     if (!rShoulder)
       return { keypoints: null, error: new InferenceError("MISSING_RSHOULDER_KEYPOINT") };
-    return { keypoints: { nose, lShoulder, rShoulder }, error: null };
+    return { keypoints: { nose, lShoulder, rShoulder, lEar, rEar }, error: null };
   }
 
   private validatePosture(keypoints: ValidKeypoints) {
     this.buffer.push(keypoints);
-    return this.buffer.averagePostureHeight > (this.calibratedHeight * (1 - this.POSTURE_TOLERANCE)) && this.buffer.averagePostureHeight < (this.calibratedHeight * (1 + this.POSTURE_TOLERANCE));
+    const hasHealthyPostureHeight =
+      this.buffer.averagePostureHeight > this.calibratedHeight * (1 - this.POSTURE_TOLERANCE) &&
+      this.buffer.averagePostureHeight < this.calibratedHeight * (1 + this.POSTURE_TOLERANCE);
+    const hasHealthyHeadTilt = this.validateEarAsymmetry(keypoints);
+    return hasHealthyPostureHeight && hasHealthyHeadTilt;
+  }
+
+  private validateEarAsymmetry(keypoints: ValidKeypoints) {
+    const asymmetry = this.getEarAsymmetry(keypoints);
+    if (asymmetry == null) {
+      return true;
+    }
+
+    this.liveEarAsymmetryBuffer.push(asymmetry);
+    this.liveEarAsymmetryTotal += asymmetry;
+
+    if (this.liveEarAsymmetryBuffer.length > this.EAR_ASYMMETRY_WINDOW_SIZE) {
+      const removedAsymmetry = this.liveEarAsymmetryBuffer.shift()!;
+      this.liveEarAsymmetryTotal -= removedAsymmetry;
+    }
+
+    if (this.calibratedEarAsymmetry == null) {
+      return true;
+    }
+
+    const averageEarAsymmetry = this.liveEarAsymmetryTotal / this.liveEarAsymmetryBuffer.length;
+    return averageEarAsymmetry <= this.calibratedEarAsymmetry + this.EAR_ASYMMETRY_TOLERANCE;
+  }
+
+  private recordCalibrationEarAsymmetry(keypoints: ValidKeypoints) {
+    const asymmetry = this.getEarAsymmetry(keypoints);
+    if (asymmetry == null) {
+      return;
+    }
+
+    this.calibrationEarAsymmetryTotal += asymmetry;
+    this.calibrationEarAsymmetryCount += 1;
+  }
+
+  private getEarAsymmetry({ lEar, rEar, lShoulder, rShoulder }: ValidKeypoints) {
+    if (!lEar || !rEar) {
+      return null;
+    }
+
+    const shoulderWidth = Math.hypot(rShoulder.x - lShoulder.x, rShoulder.y - lShoulder.y);
+    if (shoulderWidth === 0) {
+      return null;
+    }
+
+    const leftEarToShoulder = Math.hypot(lShoulder.x - lEar.x, lShoulder.y - lEar.y);
+    const rightEarToShoulder = Math.hypot(rShoulder.x - rEar.x, rShoulder.y - rEar.y);
+
+    return Math.abs(leftEarToShoulder - rightEarToShoulder) / shoulderWidth;
+  }
+
+  private resetEarAsymmetryTracking() {
+    this.calibratedEarAsymmetry = null;
+    this.liveEarAsymmetryBuffer = [];
+    this.liveEarAsymmetryTotal = 0;
+    this.calibrationEarAsymmetryCount = 0;
+    this.calibrationEarAsymmetryTotal = 0;
   }
 
   private scaleFrame(frame: ValidatedFrame): ValidatedFrame {
