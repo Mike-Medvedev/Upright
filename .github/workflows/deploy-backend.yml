@@ -47,7 +47,9 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ env.IMAGE_NAME }}:latest
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Install Azure Container Apps extension
         run: az extension add --name containerapp --upgrade
@@ -57,4 +59,4 @@ jobs:
           az containerapp update
           --name "${{ vars.AZURE_BACKEND_CONTAINER_APP_NAME }}"
           --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}"
-          --image "${{ env.IMAGE_NAME }}:latest"
+          --image "${{ env.IMAGE_NAME }}:${{ github.sha }}"
