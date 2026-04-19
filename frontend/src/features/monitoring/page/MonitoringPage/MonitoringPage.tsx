@@ -125,7 +125,7 @@ function getHeaderMessage(
     case "connecting":
       return "Connecting to Live Inference API and starting posture monitoring.";
     case "needs_calibration":
-      return "Calibration required before posture monitoring can begin. Click Calibrate to continue.";
+      return "Calibration required. Click Calibrate to continue.";
     case "calibration_countdown":
       return "Sit upright in a comfortable position. Calibration is about to begin.";
     case "live":

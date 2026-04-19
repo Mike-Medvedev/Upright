@@ -119,6 +119,9 @@ export function useLiveVideoInference(isActive: boolean) {
     } = monitoringService.process(validatedFrame);
     if (postureError && !postureData) {
       if (postureError instanceof InferenceError) {
+        if (monitoringService.isCalibrating) {
+          setProgress(monitoringService.progress);
+        }
         setHealthyPosture(null);
         const nextHeaderState = getInferenceHeaderState(postureError);
         if (nextHeaderState) {
@@ -369,12 +372,16 @@ function getInferenceHeaderState(
   switch (error.code) {
     case "MISSING_KEYPOINTS":
       return { message: "Please make sure both shoulders and head are in frame!", tone: "warning" };
+    case "MISSING_EAR_KEYPOINTS":
+      return { message: "Please make sure both ears are visible in frame!", tone: "warning" };
     case "MISSING_NOSE_KEYPOINT":
       return { message: "Please make sure your nose is in frame!", tone: "warning" };
     case "MISSING_LSHOULDER_KEYPOINT":
       return { message: "Please make sure your left shoulder is in frame!", tone: "warning" };
     case "MISSING_RSHOULDER_KEYPOINT":
       return { message: "Please make sure your right shoulder is in frame!", tone: "warning" };
+    case "USER_OUT_OF_FRAME":
+      return { message: "Please make sure your body is fully visible in frame!", tone: "warning" };
     case "MULTIPLE_PERSONS_IN_FRAME":
       return { message: "Please make sure only one person is in frame!", tone: "warning" };
     default:

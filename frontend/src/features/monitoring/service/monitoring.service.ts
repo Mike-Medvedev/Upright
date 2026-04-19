@@ -7,37 +7,24 @@ import type {
   ValidKeypoint,
   ValidKeypoints,
 } from "@/features/monitoring/monitoring.types";
-import { SlidingWindowBuffer, CalibrationBuffer } from "@/features/monitoring/service/buffer";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
+import { BoxDiagonalHeuristic } from "@/features/monitoring/service/BoxDiagonalHeuristic";
+import { EarAsymmetryHeuristic } from "@/features/monitoring/service/EarAsymmetryHeuristic";
+import { NoseShoulderHeightHeuristic } from "@/features/monitoring/service/NoseShoulderHeightHeuristic";
 
 //Todo: Ensure theres only one person in frame
 export class MonitoringService {
-  private noseShoulderHeightBuffer: SlidingWindowBuffer;
-  private liveEarAsymmetryBuffer: SlidingWindowBuffer;
-  private liveBoxDiagonalBuffer: SlidingWindowBuffer;
-  private calibrationBuffer: CalibrationBuffer;
+  private noseShoulderHeightHeuristic: NoseShoulderHeightHeuristic;
+  private earAsymmetryHeuristic: EarAsymmetryHeuristic;
+  private boxDiagonalHeuristic: BoxDiagonalHeuristic;
   private videoDimensions: { width: number; height: number } = { width: 0, height: 0 };
-  private calibratedNoseShoulderHeight: number = 0;
-  private calibratedEarAsymmetry: number | null = null;
-  private calibratedBoxDiagonal: number | null = null;
-
-  private calibrationEarAsymmetryCount: number = 0;
-  private calibrationEarAsymmetryTotal: number = 0;
-  private calibrationBoxDiagonalCount: number = 0;
-  private calibrationBoxDiagonalTotal: number = 0;
   private _isCalibrating: boolean = false;
-  private readonly POSTURE_TOLERANCE: number = 0.1;
-  private readonly EAR_ASYMMETRY_TOLERANCE: number = 0.08;
-  private readonly EAR_ASYMMETRY_WINDOW_SIZE: number = 30;
-  private readonly BOX_DIAGONAL_TOLERANCE: number = 0.15;
-  private readonly BOX_DIAGONAL_WINDOW_SIZE: number = 20;
 
   constructor() {
-    this.noseShoulderHeightBuffer = new SlidingWindowBuffer(30);
-    this.calibrationBuffer = new CalibrationBuffer(150);
-    this.liveEarAsymmetryBuffer = new SlidingWindowBuffer(30);
-    this.liveBoxDiagonalBuffer = new SlidingWindowBuffer(30);
+    this.noseShoulderHeightHeuristic = new NoseShoulderHeightHeuristic();
+    this.earAsymmetryHeuristic = new EarAsymmetryHeuristic();
+    this.boxDiagonalHeuristic = new BoxDiagonalHeuristic();
   }
 
   parseFrame(
@@ -87,43 +74,56 @@ export class MonitoringService {
     if (error) return { data: null, error, calibration: null };
 
     if (this._isCalibrating) {
-      this.calibrationBuffer.push(keypoints);
-      this.recordCalibrationEarAsymmetry(keypoints);
-      this.recordCalibrationBoxDiagonal(prediction);
-      if (this.calibrationBuffer.isFull) {
-        this.calibratedNoseShoulderHeight = this.calibrationBuffer.calibratedNoseShoulderHeight;
-        this.calibratedEarAsymmetry =
-          this.calibrationEarAsymmetryCount === 0
-            ? null
-            : this.calibrationEarAsymmetryTotal / this.calibrationEarAsymmetryCount;
-        this.calibratedBoxDiagonal =
-          this.calibrationBoxDiagonalCount === 0
-            ? null
-            : this.calibrationBoxDiagonalTotal / this.calibrationBoxDiagonalCount;
-        console.log("Calibrated Height: ", this.calibratedNoseShoulderHeight);
+      const earCalibrationError = this.earAsymmetryHeuristic.getCalibrationError(keypoints);
+      const boxDiagonalCalibrationError = this.boxDiagonalHeuristic.getCalibrationError(prediction);
+
+      this.noseShoulderHeightHeuristic.update(keypoints, true);
+
+      if (!earCalibrationError) {
+        this.earAsymmetryHeuristic.update(keypoints, true);
+      }
+
+      if (!boxDiagonalCalibrationError) {
+        this.boxDiagonalHeuristic.update(prediction, true);
+      }
+
+      const isComplete = this.isCalibrationComplete();
+      if (isComplete) {
         this._isCalibrating = false;
       }
+
+      const calibrationError = earCalibrationError ?? boxDiagonalCalibrationError;
+      if (calibrationError) {
+        return { data: null, error: calibrationError, calibration: null };
+      }
+
       return {
         data: null,
         error: null,
         calibration: {
-          progress: this.calibrationBuffer.progress,
-          isComplete: this.calibrationBuffer.isFull,
+          progress: this.calculateOverallCalibrationProgress(),
+          isComplete,
         },
       };
     }
 
-    const isHealthyPosture = this.validatePosture(keypoints);
-    const frameDistanceStatus = this.validateFrameBounds(prediction);
+    const hasHealthyPostureHeight = this.noseShoulderHeightHeuristic.update(keypoints, false);
+    const hasHealthyHeadTilt = this.earAsymmetryHeuristic.update(keypoints, false);
+    const frameDistanceStatus = this.boxDiagonalHeuristic.update(prediction, false);
+
     return {
-      data: { isHealthyPosture, frameDistanceStatus, keypoints },
+      data: {
+        isHealthyPosture: hasHealthyPostureHeight && hasHealthyHeadTilt,
+        frameDistanceStatus,
+        keypoints,
+      },
       error: null,
       calibration: null,
     };
   }
 
   get progress() {
-    return this.calibrationBuffer.progress;
+    return this.calculateOverallCalibrationProgress();
   }
 
   get isCalibrating(): boolean {
@@ -134,19 +134,16 @@ export class MonitoringService {
   }
 
   startCalibration() {
-    this.noseShoulderHeightBuffer.flush();
-    this.calibrationBuffer.flush();
-    this.resetEarAsymmetryTracking();
-    this.resetBoxDiagonalTracking();
+    this.noseShoulderHeightHeuristic.flush();
+    this.earAsymmetryHeuristic.flush();
+    this.boxDiagonalHeuristic.flush();
     this._isCalibrating = true;
   }
 
   resetSession() {
-    this.noseShoulderHeightBuffer.flush();
-    this.calibrationBuffer.flush();
-    this.calibratedNoseShoulderHeight = 0;
-    this.resetEarAsymmetryTracking();
-    this.resetBoxDiagonalTracking();
+    this.noseShoulderHeightHeuristic.flush();
+    this.earAsymmetryHeuristic.flush();
+    this.boxDiagonalHeuristic.flush();
     this._isCalibrating = false;
   }
 
@@ -179,134 +176,22 @@ export class MonitoringService {
     return { keypoints: { nose, lShoulder, rShoulder, lEar, rEar }, error: null };
   }
 
-  private validatePosture(keypoints: ValidKeypoints) {
-    const normalizedNoseShoulderHeights = this.normalizeNoseShoulderPostureHeights(keypoints);
-
-    if (normalizedNoseShoulderHeights !== 0) {
-      this.noseShoulderHeightBuffer.push(normalizedNoseShoulderHeights);
-    }
-
-    const hasHealthyPostureHeight =
-      this.noseShoulderHeightBuffer.average >
-        this.calibratedNoseShoulderHeight * (1 - this.POSTURE_TOLERANCE) &&
-      this.noseShoulderHeightBuffer.average <
-        this.calibratedNoseShoulderHeight * (1 + this.POSTURE_TOLERANCE);
-    const hasHealthyHeadTilt = this.validateEarAsymmetry(keypoints);
-    return hasHealthyPostureHeight && hasHealthyHeadTilt;
-  }
-
-  private normalizeNoseShoulderPostureHeights({
-    nose,
-    lShoulder,
-    rShoulder,
-  }: ValidKeypoints): number {
-    const framePostureheight = (lShoulder.y + rShoulder.y) / 2 - nose.y;
-    const shoulderWidth = Math.hypot(rShoulder.x - lShoulder.x, rShoulder.y - lShoulder.y);
-    if (framePostureheight <= 0 || shoulderWidth === 0) return 0;
-    return framePostureheight / shoulderWidth;
-  }
-
-  private validateEarAsymmetry(keypoints: ValidKeypoints) {
-    const asymmetry = this.getEarAsymmetry(keypoints);
-    if (asymmetry == null) {
-      return true;
-    }
-
-    this.liveEarAsymmetryBuffer.push(asymmetry);
-
-    if (this.calibratedEarAsymmetry == null) {
-      return true;
-    }
-
-    return (
-      this.liveEarAsymmetryBuffer.average <=
-      this.calibratedEarAsymmetry + this.EAR_ASYMMETRY_TOLERANCE
+  private calculateOverallCalibrationProgress() {
+    return Math.round(
+      (
+        this.noseShoulderHeightHeuristic.progress +
+        this.earAsymmetryHeuristic.progress +
+        this.boxDiagonalHeuristic.progress
+      ) / 3,
     );
   }
 
-  private recordCalibrationEarAsymmetry(keypoints: ValidKeypoints) {
-    const asymmetry = this.getEarAsymmetry(keypoints);
-    if (asymmetry == null) {
-      return;
-    }
-
-    this.calibrationEarAsymmetryTotal += asymmetry;
-    this.calibrationEarAsymmetryCount += 1;
-  }
-
-  private getEarAsymmetry({ lEar, rEar, lShoulder, rShoulder }: ValidKeypoints) {
-    if (!lEar || !rEar) {
-      return null;
-    }
-
-    const shoulderWidth = Math.hypot(rShoulder.x - lShoulder.x, rShoulder.y - lShoulder.y);
-    if (shoulderWidth === 0) {
-      return null;
-    }
-
-    const leftEarToShoulder = Math.hypot(lShoulder.x - lEar.x, lShoulder.y - lEar.y);
-    const rightEarToShoulder = Math.hypot(rShoulder.x - rEar.x, rShoulder.y - rEar.y);
-
-    return Math.abs(leftEarToShoulder - rightEarToShoulder) / shoulderWidth;
-  }
-
-  private resetEarAsymmetryTracking() {
-    this.calibratedEarAsymmetry = null;
-    this.liveEarAsymmetryBuffer.flush();
-
-    this.calibrationEarAsymmetryCount = 0;
-    this.calibrationEarAsymmetryTotal = 0;
-  }
-
-  private validateFrameBounds(prediction: Prediction): ValidationData["frameDistanceStatus"] {
-    const boxDiagonal = this.getBoxDiagonal(prediction);
-    if (boxDiagonal == null) {
-      return "within_bounds";
-    }
-
-    this.liveBoxDiagonalBuffer.push(boxDiagonal);
-
-    if (this.calibratedBoxDiagonal == null) {
-      return "within_bounds";
-    }
-
-    const minimumAllowedDiagonal = this.calibratedBoxDiagonal * (1 - this.BOX_DIAGONAL_TOLERANCE);
-    const maximumAllowedDiagonal = this.calibratedBoxDiagonal * (1 + this.BOX_DIAGONAL_TOLERANCE);
-
-    if (this.liveBoxDiagonalBuffer.average < minimumAllowedDiagonal) {
-      return "too_far";
-    }
-
-    if (this.liveBoxDiagonalBuffer.average > maximumAllowedDiagonal) {
-      return "too_close";
-    }
-
-    return "within_bounds";
-  }
-
-  private recordCalibrationBoxDiagonal(prediction: Prediction) {
-    const boxDiagonal = this.getBoxDiagonal(prediction);
-    if (boxDiagonal == null) {
-      return;
-    }
-
-    this.calibrationBoxDiagonalTotal += boxDiagonal;
-    this.calibrationBoxDiagonalCount += 1;
-  }
-
-  private getBoxDiagonal(prediction: Prediction) {
-    if (!prediction.width || !prediction.height) {
-      return null;
-    }
-
-    return Math.hypot(prediction.width, prediction.height);
-  }
-
-  private resetBoxDiagonalTracking() {
-    this.calibratedBoxDiagonal = null;
-    this.liveBoxDiagonalBuffer.flush();
-    this.calibrationBoxDiagonalCount = 0;
-    this.calibrationBoxDiagonalTotal = 0;
+  private isCalibrationComplete() {
+    return (
+      this.noseShoulderHeightHeuristic.isCalibrationComplete &&
+      this.earAsymmetryHeuristic.isCalibrationComplete &&
+      this.boxDiagonalHeuristic.isCalibrationComplete
+    );
   }
 
   private scaleFrame(frame: ValidatedFrame): ValidatedFrame {

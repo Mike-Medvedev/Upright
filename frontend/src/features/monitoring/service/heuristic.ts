@@ -1,3 +1,4 @@
+import { InferenceError } from "@/lib/errors";
 import { CalibrationBuffer, SlidingWindowBuffer } from "./buffer";
 
 export abstract class Heuristic<TInput, TOutput> {
@@ -26,6 +27,18 @@ export abstract class Heuristic<TInput, TOutput> {
     }
 
     return this.evaluateStatus();
+  }
+
+  get progress(): number {
+    return this.calibrationBuffer.progress;
+  }
+
+  get isCalibrationComplete(): boolean {
+    return this.calibrationBuffer.isFull;
+  }
+
+  getCalibrationError(_input: TInput): InferenceError | null {
+    return null;
   }
 
   flush() {

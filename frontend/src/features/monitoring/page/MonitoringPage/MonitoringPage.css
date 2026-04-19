@@ -55,18 +55,23 @@
   display: flex;
   flex-shrink: 0;
   justify-content: center;
+  min-width: 0;
   padding: var(--mantine-spacing-md);
   text-align: center;
 }
 
 .monitoringPreviewTopTitle {
   color: var(--mantine-color-white);
+  display: block;
   font-size: var(--mantine-font-size-md);
   font-weight: 600;
   line-height: 1.35;
   letter-spacing: -0.01em;
   max-width: 540px;
-  text-wrap: balance;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
 }
 
 .monitoringPreviewTopTitle_warning {
