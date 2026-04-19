@@ -1,6 +1,6 @@
 import { AppShell, Avatar, Box, Burger, Group, Loader, Menu, NavLink, Stack, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconChartBar, IconSettings, IconVideo } from "@tabler/icons-react";
+import { IconSettings, IconVideo } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import { MonitoringProvider } from "@/features/monitoring/context/monitoring.provider";
@@ -148,17 +148,6 @@ function AppLayoutShell() {
                 />
               }
               to="/monitoring"
-              variant="subtle"
-            />
-            <NavLink
-              active={location.pathname === "/analytics"}
-              classNames={navLinkClassNames}
-              color="grape"
-              component={RouterNavLink}
-              label="Analytics"
-              leftSection={<IconChartBar className="appLayoutNavIcon" size={18} stroke={1.5} />}
-              onClick={closeMobileNavbar}
-              to="/analytics"
               variant="subtle"
             />
           </Stack>
