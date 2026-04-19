@@ -1,5 +1,6 @@
 import type { ValidKeypoints } from "../monitoring.types";
 
+
 export abstract class Buffer {
   protected readonly MAX_SIZE;
   protected readonly _buffer: number[] = [];
@@ -10,15 +11,22 @@ export abstract class Buffer {
   }
 
   abstract push(keypoints: ValidKeypoints): void;
+
 }
 
 export class SlidingWindowBuffer extends Buffer {
   push({ nose, lShoulder, rShoulder }: ValidKeypoints) {
     const framePostureheight = (lShoulder.y + rShoulder.y) / 2 - nose.y;
-    if (framePostureheight === 0) return;
+    const shoulderWidth = Math.hypot(
+      rShoulder.x - lShoulder.x,
+      rShoulder.y - lShoulder.y,
+    );
+    if(framePostureheight <= 0 || shoulderWidth === 0) return;
+    const normalizedPostureHeight = framePostureheight / shoulderWidth;
 
-    this._buffer.push(framePostureheight);
-    this.runningTotalPostureHeights += framePostureheight;
+
+    this._buffer.push(normalizedPostureHeight);
+    this.runningTotalPostureHeights += normalizedPostureHeight;
     if (this._buffer.length > this.MAX_SIZE) {
       const removedFrame = this._buffer.shift()!;
       this.runningTotalPostureHeights -= removedFrame;
@@ -40,10 +48,16 @@ export class CalibrationBuffer extends Buffer {
       console.log("CALIBRATION BUFFER FULL!");
       return;
     }
-    const height = (lShoulder.y + rShoulder.y) / 2 - nose.y;
-    if (height === 0) return;
-    this._buffer.push(height);
-    this.runningTotalPostureHeights += height;
+    const postureHeight = (lShoulder.y + rShoulder.y) / 2 - nose.y;
+    const shoulderWidth = Math.hypot(
+      rShoulder.x - lShoulder.x,
+      rShoulder.y - lShoulder.y,
+    );
+    if(postureHeight <= 0 || shoulderWidth === 0) return;
+    const normalizedPostureHeight = postureHeight / shoulderWidth;
+    if (normalizedPostureHeight === 0) return;
+    this._buffer.push(normalizedPostureHeight);
+    this.runningTotalPostureHeights += normalizedPostureHeight;
   }
 
   get isFull() {
