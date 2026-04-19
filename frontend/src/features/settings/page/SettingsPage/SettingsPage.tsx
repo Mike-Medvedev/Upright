@@ -91,19 +91,6 @@ export function SettingsPage() {
             <Text className="settingsSupportText" size="xs">
               {getNotificationPermissionMessage(notificationPermission)}
             </Text>
-            {notificationPermission === "granted" ? (
-              <Button
-                className="settingsNotificationTestButton"
-                mt="xs"
-                onClick={() => {
-                  monitoringAlertsService.showTestDesktopNotification();
-                }}
-                size="xs"
-                variant="light"
-              >
-                Send test notification
-              </Button>
-            ) : null}
           </div>
           <Switch
             aria-label="Enable desktop posture notifications"

@@ -36,10 +36,6 @@
   margin-top: 6px;
 }
 
-.settingsNotificationTestButton {
-  max-width: 180px;
-}
-
 .settingsPlaceholderRow {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: var(--mantine-spacing-sm);
@@ -73,7 +69,6 @@
     align-self: flex-start;
   }
 
-  .settingsNotificationTestButton,
   .settingsDeleteButton {
     max-width: none;
     width: 100%;

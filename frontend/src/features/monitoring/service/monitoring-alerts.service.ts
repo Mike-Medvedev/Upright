@@ -7,7 +7,6 @@ import {
 
 const MONITORING_ALERT_PREFERENCES_STORAGE_KEY = "upright.monitoring.alert-preferences";
 const BAD_POSTURE_NOTIFICATION_TAG = "upright-bad-posture-alert";
-const TEST_NOTIFICATION_TAG = "upright-notification-test";
 const BAD_POSTURE_ALERT_SPEECH_TEXT = "Bad posture detected";
 
 function hasVoiceAlertSupport() {
@@ -143,26 +142,6 @@ export const monitoringAlertsService = {
       requireInteraction: true,
       silent: true,
       tag: BAD_POSTURE_NOTIFICATION_TAG,
-    });
-
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-
-    return true;
-  },
-
-  showTestDesktopNotification() {
-    if (!hasDesktopNotificationSupport() || Notification.permission !== "granted") {
-      return false;
-    }
-
-    const notification = new Notification("Upright notifications enabled", {
-      body: "You should see posture alerts here when the app is in another tab.",
-      requireInteraction: true,
-      silent: true,
-      tag: TEST_NOTIFICATION_TAG,
     });
 
     notification.onclick = () => {
