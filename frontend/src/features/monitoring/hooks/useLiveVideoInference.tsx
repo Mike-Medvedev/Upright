@@ -3,6 +3,7 @@ import { useEffect, useState, useEffectEvent, useCallback, useRef } from "react"
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
 import useCanvas from "./useCanvas";
+import type { Point } from "../service/canvas.service";
 import { monitoringAlertsService } from "../service/monitoring-alerts.service";
 import { monitoringService } from "../service/monitoring.service";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
@@ -31,18 +32,57 @@ export function useLiveVideoInference(isActive: boolean) {
   const latestStatusRef = useRef<MonitoringSessionStatus>("idle");
   const unhealthySinceRef = useRef<number | null>(null);
   const lastAlertAtRef = useRef<number | null>(null);
+  const videoElementRef = useRef<HTMLVideoElement | null>(null);
+
+  const syncCanvasToDisplay = useCallback(() => {
+    const node = videoElementRef.current;
+    if (!node) return;
+
+    const renderedWidth = Math.round(node.clientWidth);
+    const renderedHeight = Math.round(node.clientHeight);
+
+    if (!renderedWidth || !renderedHeight) return;
+
+    resize(renderedWidth, renderedHeight);
+  }, [resize]);
+
+  const mapPointToDisplaySpace = useCallback((point: Point): Point => {
+    const node = videoElementRef.current;
+    if (!node) return point;
+
+    const sourceWidth = node.videoWidth;
+    const sourceHeight = node.videoHeight;
+    const renderedWidth = node.clientWidth;
+    const renderedHeight = node.clientHeight;
+
+    if (!sourceWidth || !sourceHeight || !renderedWidth || !renderedHeight) {
+      return point;
+    }
+
+    const coverScale = Math.max(renderedWidth / sourceWidth, renderedHeight / sourceHeight);
+    const drawnWidth = sourceWidth * coverScale;
+    const drawnHeight = sourceHeight * coverScale;
+    const offsetX = (renderedWidth - drawnWidth) / 2;
+    const offsetY = (renderedHeight - drawnHeight) / 2;
+
+    return {
+      x: point.x * coverScale + offsetX,
+      y: point.y * coverScale + offsetY,
+    };
+  }, []);
 
   const videoRef = useCallback(
     (node: HTMLVideoElement | null) => {
-      if (node) {
-        node.srcObject = cameraStream;
-        node.onloadedmetadata = () => {
-          resize(node.videoWidth, node.videoHeight);
-          monitoringService.setDimensions({ width: node.videoWidth, height: node.videoHeight });
-        };
-      }
+      videoElementRef.current = node;
+      if (!node) return;
+
+      node.srcObject = cameraStream;
+      node.onloadedmetadata = () => {
+        syncCanvasToDisplay();
+        monitoringService.setDimensions({ width: node.videoWidth, height: node.videoHeight });
+      };
     },
-    [cameraStream, resize],
+    [cameraStream, syncCanvasToDisplay],
   );
   const onData = useEffectEvent((data: WebRTCOutputData): void => {
     if (isLoading) {
@@ -111,17 +151,37 @@ export function useLiveVideoInference(isActive: boolean) {
       return;
     }
     const { lShoulder, rShoulder } = postureData.keypoints;
+    const displayLeftShoulder = mapPointToDisplaySpace({ x: lShoulder.x, y: lShoulder.y });
+    const displayRightShoulder = mapPointToDisplaySpace({ x: rShoulder.x, y: rShoulder.y });
     setHealthyPosture(postureData.isHealthyPosture);
     setHeaderMessage(postureData.isHealthyPosture ? "Healthy posture" : "Unhealthy posture");
     setHeaderMessageTone(postureData.isHealthyPosture ? "success" : "warning");
     reset();
     drawEdge({
       color: postureData.isHealthyPosture ? "rgba(64, 192, 87, 0.95)" : "rgba(250, 82, 82, 0.95)",
-      point1: { x: lShoulder.x, y: lShoulder.y },
-      point2: { x: rShoulder.x, y: rShoulder.y },
+      point1: displayLeftShoulder,
+      point2: displayRightShoulder,
       width: 6,
     });
   });
+
+  useEffect(() => {
+    if (!isActive || !videoElementRef.current) {
+      return;
+    }
+
+    syncCanvasToDisplay();
+
+    const resizeObserver = new ResizeObserver(() => {
+      syncCanvasToDisplay();
+    });
+
+    resizeObserver.observe(videoElementRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [isActive, syncCanvasToDisplay]);
 
   useEffect(() => {
     if (calibrationCountdown === null) {
