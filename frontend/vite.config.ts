@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       heyApiPlugin({
+        // Hey API vite plugin automatically generates a http client based on backends openapi spec. Runs on all vite commands (i.e) npm run dev, npm run build
         config: {
           input: `${BASE_URL}/docs/openapi.json`,
           output: "src/generated",

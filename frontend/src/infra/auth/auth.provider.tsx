@@ -1,13 +1,11 @@
+/**
+ * This module provides an Auth Context that exposes an API using Supabase Client
+ * to authenticate users and manage user sessions
+ */
+
 import { AuthContext } from "@/infra/auth/auth.context";
 import { supabase } from "@/infra/auth/auth.client";
-import {
-  createOAuthCredentials,
-  getSignUpRedirectOptions,
-  getSignUpResult,
-  parseLoginCredentials,
-  parseSignUpCredentials,
-  toApplicationError,
-} from "@/infra/auth/auth.service";
+import { authService } from "@/infra/auth/auth.service";
 import type { AuthContextValue } from "@/features/auth/auth.types";
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
@@ -29,11 +27,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus(nextUser ? "authenticated" : "unauthenticated");
     };
 
+    // promise used as a fire and forget, it either calls or applySession or onAuthStateChange does, both end up setting the session
     void supabase.auth
       .getSession()
       .then(({ data, error }) => {
         if (error) {
-          throw toApplicationError(error, "Unable to restore your session.");
+          throw authService.toApplicationError(error, "Unable to restore your session.");
         }
 
         applySession(data.session);
@@ -43,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         applySession(null);
       });
 
+    // Primary mechanism for updating webapps auth state through supabase auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_, session) => {
@@ -58,26 +58,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const api: AuthContextValue = {
     createUser: async (credentials) => {
       try {
-        const { email, password } = parseSignUpCredentials(credentials);
+        const { email, password } = authService.parseSignUpCredentials(credentials);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: getSignUpRedirectOptions(),
+          options: authService.getSignUpRedirectOptions(),
         });
 
         if (error) {
           throw error;
         }
 
-        return getSignUpResult(email, Boolean(data.session));
+        return authService.getSignUpResult(email, Boolean(data.session));
       } catch (error) {
-        throw toApplicationError(error, "Unable to create your account.");
+        throw authService.toApplicationError(error, "Unable to create your account.");
       }
     },
     login: async (params) => {
       try {
         if (params.type === "email") {
-          const credentials = parseLoginCredentials(params.credentials);
+          const credentials = authService.parseLoginCredentials(params.credentials);
           const { error } = await supabase.auth.signInWithPassword(credentials);
 
           if (error) {
@@ -88,14 +88,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const { error } = await supabase.auth.signInWithOAuth(
-          createOAuthCredentials(params.credentials.provider),
+          authService.createOAuthCredentials(params.credentials.provider),
         );
 
         if (error) {
           throw error;
         }
       } catch (error) {
-        throw toApplicationError(error, "Unable to sign you in.");
+        throw authService.toApplicationError(error, "Unable to sign you in.");
       }
     },
     logout: async () => {
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw error;
         }
       } catch (error) {
-        throw toApplicationError(error, "Unable to sign you out.");
+        throw authService.toApplicationError(error, "Unable to sign you out.");
       }
     },
     status,

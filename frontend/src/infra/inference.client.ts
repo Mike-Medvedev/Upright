@@ -4,13 +4,6 @@ import { settings } from "@/settings";
 
 const inferenceProxyUrl = new URL("/init-webrtc", settings.apiUrl).toString();
 
-const workflowsParameters = {
-  is_calibrating: false,
-  baseline_height: 100,
-  threshold_ratio: 0.8,
-};
-
-//SubStep2. Configure web rtc connection paramters
 const wrtcParams = {
   workspaceName: settings.roboflowWorkspaceName,
   workflowId: settings.roboflowWorkspaceId,
@@ -20,12 +13,23 @@ const wrtcParams = {
   requestedPlan: "webrtc-gpu-medium",
   requestedRegion: "us",
   realtimeProcessing: true,
-  workflowsParameters,
 };
 
+/**
+ * Manages a WebRTC connection with Roboflow via a backend proxy.
+ * This client pipes a video stream to Roboflow for real-time inference
+ * and handles incoming predictions via a provided callback.
+ */
 class InferenceClient {
   private connection: webrtc.RFWebRTCConnection | null = null;
 
+  /**
+   * Initializes the WebRTC connection and begins streaming video for inference.
+   * @param video - The source MediaStream from the user's camera.
+   * @param onData - Callback function triggered when Roboflow sends back live video inference data.
+   * @returns A promise resolving to the established RFWebRTCConnection.
+   * @throws {InferenceConnectionError} If the proxy is unreachable or the handshake fails.
+   */
   async start(
     video: MediaStream,
     onData: (data: WebRTCOutputData) => void,
@@ -54,10 +58,3 @@ class InferenceClient {
 }
 
 export const inferenceClient = new InferenceClient();
-/**
- * AbstractionsL
- * I have the actualy roboflow werbrtc connection which requires specific configurations, a video stream and a callback on what to do with data
- * I need to re render react when i get the first prediction so i need statefulness there
- * Okay so i can have the initial wrapper layer which calls and configures the roboflow configs which should be roboflow infra specific
- * Then I can simply call that from a react component layer which passes the video stream and callback and also updates the UI on first prediction
- */

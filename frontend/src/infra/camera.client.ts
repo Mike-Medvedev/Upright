@@ -1,5 +1,9 @@
 import { streams } from "@roboflow/inference-sdk";
 
+/**
+ * Camera Client exposes access to your machines local camera
+ * Allowing users to access their cameras Media Stream
+ */
 class CameraClient {
   private stream: MediaStream | null = null;
   async getCamera() {
@@ -20,4 +24,5 @@ class CameraClient {
     else console.warn("Attempted to stop null camera stream");
   }
 }
+/** camera client singleton for accessing your local cameras video stream */
 export const cameraClient = new CameraClient();

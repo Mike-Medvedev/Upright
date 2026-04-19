@@ -20,7 +20,6 @@ export const WebrtcService = {
       config: {
         streamOutputNames: wrtcParams.streamOutputNames,
         dataOutputNames: wrtcParams.dataOutputNames,
-        workflowsParameters: wrtcParams.workflowsParameters,
         requestedPlan: wrtcParams.requestedPlan,
         requestedRegion: wrtcParams.requestedRegion,
         processingTimeout: wrtcParams.processingTimeout,
