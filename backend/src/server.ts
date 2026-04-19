@@ -6,6 +6,12 @@ const server = app.listen(config.PORT, () => {
   console.log(`Server listening on port ${config.PORT}`);
 });
 
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+
+process.on("uncaughtException", handleFatalError);
+process.on("unhandledRejection", handleFatalError);
+
 function shutdown(signal?: string) {
   console.log(`Gracefully shutting down due to ${signal}`);
 
@@ -25,9 +31,3 @@ function handleFatalError(err: unknown) {
 
   shutdown("fatal");
 }
-
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
-
-process.on("uncaughtException", handleFatalError);
-process.on("unhandledRejection", handleFatalError);

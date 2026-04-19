@@ -5,30 +5,28 @@ const require = createRequire(import.meta.url);
 const { InferenceHTTPClient } = require("@roboflow/inference-sdk");
 // import { InferenceHTTPClient } from "@roboflow/inference-sdk";
 
-export async function initializeWebrtcSession(body: {
-  offer: unknown;
-  wrtcParams: Record<string, unknown>;
-}) {
-  const { offer, wrtcParams } = body;
+export const WebrtcService = {
+  async initializeWebrtcSession(body: { offer: unknown; wrtcParams: Record<string, unknown> }) {
+    const { offer, wrtcParams } = body;
 
-  // API key stays secure on the server
-  const client = InferenceHTTPClient.init({
-    apiKey: config.ROBOFLOW_API_KEY,
-  });
+    const client = InferenceHTTPClient.init({
+      apiKey: config.ROBOFLOW_API_KEY,
+    });
 
-  const answer = await client.initializeWebrtcWorker({
-    offer,
-    workspaceName: wrtcParams.workspaceName,
-    workflowId: wrtcParams.workflowId,
-    config: {
-      streamOutputNames: wrtcParams.streamOutputNames,
-      dataOutputNames: wrtcParams.dataOutputNames,
-      workflowsParameters: wrtcParams.workflowsParameters,
-      requestedPlan: wrtcParams.requestedPlan,
-      requestedRegion: wrtcParams.requestedRegion,
-      processingTimeout: wrtcParams.processingTimeout,
-    },
-  });
+    const answer = await client.initializeWebrtcWorker({
+      offer,
+      workspaceName: wrtcParams.workspaceName,
+      workflowId: wrtcParams.workflowId,
+      config: {
+        streamOutputNames: wrtcParams.streamOutputNames,
+        dataOutputNames: wrtcParams.dataOutputNames,
+        workflowsParameters: wrtcParams.workflowsParameters,
+        requestedPlan: wrtcParams.requestedPlan,
+        requestedRegion: wrtcParams.requestedRegion,
+        processingTimeout: wrtcParams.processingTimeout,
+      },
+    });
 
-  return answer;
-}
+    return answer;
+  },
+};
