@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
       react(),
       heyApiPlugin({
         config: {
-          input: "./openapi.json",
+          input: `${BASE_URL}/docs/openapi.json`,
           output: "src/generated",
           plugins: [
             "@hey-api/typescript",
