@@ -5,7 +5,7 @@ import { useLiveVideoInference } from "@/features/monitoring/hooks/useLiveVideoI
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
 import { InferenceConnectionError, LocalCameraError } from "@/lib/errors";
-import "./MonitoringPage.css";
+import "@/features/monitoring/page/MonitoringPage/MonitoringPage.css";
 
 export function MonitoringPage() {
   const { reset, startCamera, state, stopCamera, syncState } = useMonitoring();

@@ -3,7 +3,7 @@ import {
   CanvasService,
   type CanvasEdgeProps,
   type CanvasTextProps,
-} from "../service/canvas.service";
+} from "@/features/monitoring/service/canvas.service";
 
 export default function useCanvas() {
   const canvasServiceRef = useRef<CanvasService | null>(null);

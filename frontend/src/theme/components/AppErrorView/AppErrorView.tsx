@@ -1,7 +1,7 @@
 import { Button, Group, Stack, Text, Title } from "@mantine/core";
 import { Link } from "react-router";
 import { ApplicationError, NotFoundError } from "@/lib/errors";
-import "./AppErrorView.css";
+import "@/theme/components/AppErrorView/AppErrorView.css";
 
 interface AppErrorViewProps {
   actionLabel?: string;

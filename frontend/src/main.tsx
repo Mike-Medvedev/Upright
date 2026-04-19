@@ -1,4 +1,4 @@
-import "./index.css";
+import "@/index.css";
 import "@mantine/core/styles.css";
 import "@/infra/api.client";
 

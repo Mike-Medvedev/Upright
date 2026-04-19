@@ -1,5 +1,5 @@
 import { Loader, Stack, Text, Title } from "@mantine/core";
-import "./AppLoadingView.css";
+import "@/theme/components/AppLoadingView/AppLoadingView.css";
 
 interface AppLoadingViewProps {
   description: string;

@@ -1,6 +1,6 @@
 import { Stack, Text, Title } from "@mantine/core";
 import { AppLogo } from "@/theme/components/AppLogo/AppLogo";
-import "./AuthShell.css";
+import "@/features/auth/components/AuthShell/AuthShell.css";
 
 interface AuthShellProps {
   children: React.ReactNode;

@@ -1,4 +1,4 @@
-import type { ValidKeypoints } from "../monitoring.types";
+import type { ValidKeypoints } from "@/features/monitoring/monitoring.types";
 
 
 export abstract class Buffer {

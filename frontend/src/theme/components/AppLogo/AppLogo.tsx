@@ -1,4 +1,4 @@
-import "./AppLogo.css";
+import "@/theme/components/AppLogo/AppLogo.css";
 
 interface AppLogoProps {
   className?: string;

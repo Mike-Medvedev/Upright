@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import { monitoringAlertsService } from "@/features/monitoring/service/monitoring-alerts.service";
 import type { BrowserNotificationPermissionState } from "@/features/monitoring/monitoring.types";
-import "./SettingsPage.css";
+import "@/features/settings/page/SettingsPage/SettingsPage.css";
 
 export function SettingsPage() {
   const { alertPreferences, updateAlertPreferences } = useMonitoring();

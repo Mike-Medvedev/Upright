@@ -19,7 +19,7 @@ import { MonitoringProvider } from "@/features/monitoring/context/monitoring.pro
 import { NavLink as RouterNavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/infra/auth/auth.context";
 import { AppLogo } from "@/theme/components/AppLogo/AppLogo";
-import "./AppLayout.css";
+import "@/theme/components/AppLayout/AppLayout.css";
 
 function getAvatarLetter(email: string | undefined): string {
   if (!email) {
