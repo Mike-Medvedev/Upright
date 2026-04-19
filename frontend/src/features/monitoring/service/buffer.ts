@@ -55,7 +55,7 @@ export class CalibrationBuffer extends Buffer {
     );
     if(postureHeight <= 0 || shoulderWidth === 0) return;
     const normalizedPostureHeight = postureHeight / shoulderWidth;
-    if (normalizedPostureHeight === 0) return;
+
     this._buffer.push(normalizedPostureHeight);
     this.runningTotalPostureHeights += normalizedPostureHeight;
   }
