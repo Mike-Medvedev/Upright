@@ -32,7 +32,7 @@ These keypoints are used to determine if you are slouching using two heuristics
 
 # The important files
 
-- [**buffer.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/heuristics/core/buffer.ts) - Custom structure for processing video frames
+- [**buffer.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/heuristics/core/buffer.ts) - Custom data structure for processing video frames
 - [**heuristic.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/heuristics/core/heuristic.ts) - The Base class for heuristic abstraction
 - [\*\*service/heuristics](https://github.com/Mike-Medvedev/Upright/tree/main/frontend/src/features/monitoring/service/heuristics) - There are three heuristics with the logic for each one
 - [**monitoring-service.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/monitoring.service.ts) - the main orchestrator that processes and validates frames and kicks off calibration and calls heuristic logic
