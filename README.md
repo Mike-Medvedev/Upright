@@ -24,6 +24,20 @@ These keypoints are used to determine if you are slouching using two heuristics
 
 1. Yolo26 Model returns a bounding box around the detected human, we measure the diagnol of this box and major deviations mean the user is too close or too far from the camera.
 
+## How to inspect this repo
+
+- The backend is a simple express JS server with a proxy endpoint /init-webrtc which sends a request to Roboflow Inference API
+  This establishes a WebRTC connection between the frontend and roboflow.
+- The frontend is a React + Vite and uses Mantine UI for styling and React Router Dom for routing
+
+# The important files
+
+- [**buffer.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/heuristics/core/buffer.ts) - Custom structure for processing video frames
+- [**heuristic.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/heuristics/core/heuristic.ts) - The Base class for heuristic abstraction
+- [\*\*service/heuristics](https://github.com/Mike-Medvedev/Upright/tree/main/frontend/src/features/monitoring/service/heuristics) - There are three heuristics with the logic for each one
+- [**monitoring-service.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/monitoring.service.ts) - the main orchestrator that processes and validates frames and kicks off calibration and calls heuristic logic
+- [**useLiveVideoInference.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/hooks/useLiveVideoInference.tsx) - The glue between the React world and the Monitoring logic
+
 ## The Future of Upright
 
 My vision for this application is simple, there is no health platform for remote professionals.
@@ -41,17 +55,3 @@ Goal of keeping remote professionals aware of their health and providing the ste
 ## Current Issues
 
 1. Yolo26 Machine Learning sometimes returns multiple predictions in some frames so detecting multiple users is buggy because of this.
-
-## How to inspect this repo
-
-- The backend is a simple express JS server with a proxy endpoint /init-webrtc which sends a request to Roboflow Inference API
-  This establishes a WebRTC connection between the frontend and roboflow.
-- The frontend is a React + Vite and uses Mantine UI for styling and React Router Dom for routing
-
-# The important files
-
-- [**buffer.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/heuristics/core/buffer.ts) - Custom structure for processing video frames
-- [**heuristic.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/heuristics/core/heuristic.ts) - The Base class for heuristic abstraction
-- [\*\*service/heuristics](https://github.com/Mike-Medvedev/Upright/tree/main/frontend/src/features/monitoring/service/heuristics) - There are three heuristics with the logic for each one
-- [**monitoring-service.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/service/monitoring.service.ts) - the main orchestrator that processes and validates frames and kicks off calibration and calls heuristic logic
-- [**useLiveVideoInference.ts**](https://github.com/Mike-Medvedev/Upright/blob/main/frontend/src/features/monitoring/hooks/useLiveVideoInference.tsx) - The glue between the React world and the Monitoring logic
