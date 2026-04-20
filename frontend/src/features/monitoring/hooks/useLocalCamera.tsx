@@ -2,6 +2,9 @@ import { cameraClient } from "@/infra/camera.client";
 import { LocalCameraError } from "@/lib/errors";
 import { useState, useEffect } from "react";
 
+/**
+ * A React hook for managing the lifecycle of a local hardware camera stream.
+ */
 function useLocalCamera(enabled: boolean) {
   const [error, setError] = useState<Error | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -31,7 +34,7 @@ function useLocalCamera(enabled: boolean) {
             error instanceof Error ? error.cause : undefined,
           ),
         );
-      })
+      });
 
     return () => {
       disposed = true;

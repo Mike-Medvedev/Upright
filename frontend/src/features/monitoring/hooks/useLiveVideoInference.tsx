@@ -14,8 +14,19 @@ import { monitoringService } from "@/features/monitoring/service/monitoring.serv
 import { deriveMonitoringSessionStatus } from "@/features/monitoring/utils/monitoring-session.utils";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
-import type { MonitoringSessionStatus, ValidationData } from "@/features/monitoring/monitoring.types";
+import type {
+  MonitoringSessionStatus,
+  ValidationData,
+} from "@/features/monitoring/monitoring.types";
 
+/**
+ * The primary orchestrator hook for live AI posture monitoring. The Glue between React and the Processing engine
+ * This hook manages the end-to-end "Inference Loop":
+ * 1. **Ingestion**: Connects to the local camera via `useLocalCamera`.
+ * 2. **Inference**: Streams video tracks to `inferenceClient` (Roboflow/WebRTC).
+ * 3. **Processing**: Passes raw AI predictions to `monitoringService` to validate posture and handle calibration.
+ * 4. **UI Updates: Exposes State for Inference errors, messages, posture status that is consumed in Monitoring Page
+ */
 export function useLiveVideoInference(isActive: boolean) {
   const { alertPreferences } = useMonitoring();
   const { cameraStream, isLoading: isCameraLoading, error: cameraError } = useLocalCamera(isActive);

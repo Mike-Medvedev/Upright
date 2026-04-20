@@ -3,7 +3,7 @@ import { AuthCallbackPage } from "@/features/auth/page/AuthCallbackPage/AuthCall
 import { LoginPage } from "@/features/auth/page/LoginPage/LoginPage";
 import { SignupPage } from "@/features/auth/page/SignupPage/SignupPage";
 import { MonitoringPage } from "@/features/monitoring/page/MonitoringPage/MonitoringPage";
-import { SettingsPage } from "@/features/settings/page/SettingsPage/SettingsPage";
+import { SettingsPage } from "@/features/settings/SettingsPage";
 import { NotFoundPage } from "@/routes/NotFoundPage/NotFoundPage";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { PublicOnlyRoute } from "@/routes/PublicOnlyRoute";

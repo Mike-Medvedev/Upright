@@ -7,10 +7,12 @@ import "@/features/settings/page/SettingsPage/SettingsPage.css";
 
 export function SettingsPage() {
   const { alertPreferences, updateAlertPreferences } = useMonitoring();
-  const [isRequestingNotificationPermission, setIsRequestingNotificationPermission] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState<BrowserNotificationPermissionState>(() =>
-    monitoringAlertsService.getDesktopNotificationPermission(),
-  );
+  const [isRequestingNotificationPermission, setIsRequestingNotificationPermission] =
+    useState(false);
+  const [notificationPermission, setNotificationPermission] =
+    useState<BrowserNotificationPermissionState>(() =>
+      monitoringAlertsService.getDesktopNotificationPermission(),
+    );
 
   useEffect(() => {
     const syncNotificationPermission = () => {

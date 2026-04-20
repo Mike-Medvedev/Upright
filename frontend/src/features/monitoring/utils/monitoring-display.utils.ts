@@ -7,10 +7,19 @@ export function getRenderedVideoSize(node: HTMLVideoElement) {
   };
 }
 
-export function mapPointToCoverDisplaySpace(
-  point: Point,
-  node: HTMLVideoElement | null,
-): Point {
+/**
+ * Maps a point from the raw video coordinate space (source) to the display coordinate
+ * space of an HTMLVideoElement using `object-fit: cover` logic.
+ * This accounts for the scaling and centering offsets applied by the browser when
+ * the video's aspect ratio differs from the element's aspect ratio.
+ *
+ * @param {Point} point - The original x,y coordinates relative to the video's intrinsic dimensions.
+ *
+ * @param {HTMLVideoElement | null} node - The video element to map the point against.
+ *
+ * @returns {Point} The mapped x,y coordinates relative to the video element's client bounds.
+ */
+export function mapPointToCoverDisplaySpace(point: Point, node: HTMLVideoElement | null): Point {
   if (!node) {
     return point;
   }

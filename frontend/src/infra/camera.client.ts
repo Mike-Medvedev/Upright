@@ -24,5 +24,4 @@ class CameraClient {
     else console.warn("Attempted to stop null camera stream");
   }
 }
-/** camera client singleton for accessing your local cameras video stream */
 export const cameraClient = new CameraClient();
