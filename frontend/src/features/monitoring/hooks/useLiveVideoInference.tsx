@@ -370,12 +370,16 @@ function getInferenceHeaderState(
   error: InferenceError,
 ): { message: string; tone: "warning" } | null {
   switch (error.code) {
+    case "MISSING_VIDEO_DIMENSIONS":
+      return null;
     case "MISSING_KEYPOINTS":
       return { message: "Please make sure both shoulders and head are in frame!", tone: "warning" };
     case "MISSING_EAR_KEYPOINTS":
       return { message: "Please make sure both ears are visible in frame!", tone: "warning" };
     case "MISSING_NOSE_KEYPOINT":
       return { message: "Please make sure your nose is in frame!", tone: "warning" };
+    case "INVALID_POSTURE_CALIBRATION":
+      return { message: "Please sit upright with your head above your shoulders.", tone: "warning" };
     case "MISSING_LSHOULDER_KEYPOINT":
       return { message: "Please make sure your left shoulder is in frame!", tone: "warning" };
     case "MISSING_RSHOULDER_KEYPOINT":

@@ -56,16 +56,16 @@ export class MonitoringService {
     return { validatedFrame: raw as ValidatedFrame, error: null };
   }
 
-  setDimensions(dimensions: { width: number; height: number }) {
-    this.videoDimensions = dimensions;
-  }
-
   process(
     frame: ValidatedFrame,
   ):
     | { data: ValidationData; error: null; calibration: null }
     | { data: null; error: InferenceError; calibration: null }
     | { data: null; error: null; calibration: { progress: number; isComplete: boolean } } {
+    if (!this.hasVideoDimensions()) {
+      return { data: null, error: new InferenceError("MISSING_VIDEO_DIMENSIONS"), calibration: null };
+    }
+
     const scaledFrame = this.scaleFrame(frame);
     const prediction = scaledFrame.output.predictions[0];
     const rawKeypoints = prediction.keypoints;
@@ -74,10 +74,13 @@ export class MonitoringService {
     if (error) return { data: null, error, calibration: null };
 
     if (this._isCalibrating) {
+      const noseCalibrationError = this.noseShoulderHeightHeuristic.getCalibrationError(keypoints);
       const earCalibrationError = this.earAsymmetryHeuristic.getCalibrationError(keypoints);
       const boxDiagonalCalibrationError = this.boxDiagonalHeuristic.getCalibrationError(prediction);
 
-      this.noseShoulderHeightHeuristic.update(keypoints, true);
+      if (!noseCalibrationError) {
+        this.noseShoulderHeightHeuristic.update(keypoints, true);
+      }
 
       if (!earCalibrationError) {
         this.earAsymmetryHeuristic.update(keypoints, true);
@@ -92,7 +95,8 @@ export class MonitoringService {
         this._isCalibrating = false;
       }
 
-      const calibrationError = earCalibrationError ?? boxDiagonalCalibrationError;
+      const calibrationError =
+        noseCalibrationError ?? earCalibrationError ?? boxDiagonalCalibrationError;
       if (calibrationError) {
         return { data: null, error: calibrationError, calibration: null };
       }
@@ -120,31 +124,6 @@ export class MonitoringService {
       error: null,
       calibration: null,
     };
-  }
-
-  get progress() {
-    return this.calculateOverallCalibrationProgress();
-  }
-
-  get isCalibrating(): boolean {
-    return this._isCalibrating;
-  }
-  set isCalibrating(status: boolean) {
-    this._isCalibrating = status;
-  }
-
-  startCalibration() {
-    this.noseShoulderHeightHeuristic.flush();
-    this.earAsymmetryHeuristic.flush();
-    this.boxDiagonalHeuristic.flush();
-    this._isCalibrating = true;
-  }
-
-  resetSession() {
-    this.noseShoulderHeightHeuristic.flush();
-    this.earAsymmetryHeuristic.flush();
-    this.boxDiagonalHeuristic.flush();
-    this._isCalibrating = false;
   }
 
   private extractKeypoints(
@@ -176,24 +155,6 @@ export class MonitoringService {
     return { keypoints: { nose, lShoulder, rShoulder, lEar, rEar }, error: null };
   }
 
-  private calculateOverallCalibrationProgress() {
-    return Math.round(
-      (
-        this.noseShoulderHeightHeuristic.progress +
-        this.earAsymmetryHeuristic.progress +
-        this.boxDiagonalHeuristic.progress
-      ) / 3,
-    );
-  }
-
-  private isCalibrationComplete() {
-    return (
-      this.noseShoulderHeightHeuristic.isCalibrationComplete &&
-      this.earAsymmetryHeuristic.isCalibrationComplete &&
-      this.boxDiagonalHeuristic.isCalibrationComplete
-    );
-  }
-
   private scaleFrame(frame: ValidatedFrame): ValidatedFrame {
     const scaleX = this.videoDimensions.width / frame.output.image.width;
     const scaleY = this.videoDimensions.height / frame.output.image.height;
@@ -220,6 +181,62 @@ export class MonitoringService {
       },
     };
   }
+
+  private hasVideoDimensions() {
+    return this.videoDimensions.width > 0 && this.videoDimensions.height > 0;
+  }
+
+
+  setDimensions(dimensions: { width: number; height: number }) {
+    this.videoDimensions = dimensions;
+  }
+
+  get progress() {
+    return this.calculateOverallCalibrationProgress();
+  }
+
+  get isCalibrating(): boolean {
+    return this._isCalibrating;
+  }
+  set isCalibrating(status: boolean) {
+    this._isCalibrating = status;
+  }
+
+  startCalibration() {
+    this.noseShoulderHeightHeuristic.flush();
+    this.earAsymmetryHeuristic.flush();
+    this.boxDiagonalHeuristic.flush();
+    this._isCalibrating = true;
+  }
+
+  resetSession() {
+    this.noseShoulderHeightHeuristic.flush();
+    this.earAsymmetryHeuristic.flush();
+    this.boxDiagonalHeuristic.flush();
+    this._isCalibrating = false;
+  }
+
+  
+
+  private calculateOverallCalibrationProgress() {
+    return Math.round(
+      (
+        this.noseShoulderHeightHeuristic.progress +
+        this.earAsymmetryHeuristic.progress +
+        this.boxDiagonalHeuristic.progress
+      ) / 3,
+    );
+  }
+
+  private isCalibrationComplete() {
+    return (
+      this.noseShoulderHeightHeuristic.isCalibrationComplete &&
+      this.earAsymmetryHeuristic.isCalibrationComplete &&
+      this.boxDiagonalHeuristic.isCalibrationComplete
+    );
+  }
+
+  
 }
 
 export const monitoringService = new MonitoringService();

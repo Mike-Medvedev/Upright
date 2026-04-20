@@ -25,7 +25,7 @@ export class EarAsymmetryHeuristic extends Heuristic<ValidKeypoints, boolean> {
     return Math.abs(leftEarToShoulder - rightEarToShoulder) / shoulderWidth;
   }
 
-  override getCalibrationError({ lEar, rEar }: ValidKeypoints): InferenceError | null {
+  getCalibrationError({ lEar, rEar }: ValidKeypoints): InferenceError | null {
     if (!lEar || !rEar) {
       return new InferenceError("MISSING_EAR_KEYPOINTS");
     }

@@ -37,9 +37,7 @@ export abstract class Heuristic<TInput, TOutput> {
     return this.calibrationBuffer.isFull;
   }
 
-  getCalibrationError(_input: TInput): InferenceError | null {
-    return null;
-  }
+  abstract getCalibrationError(_input: TInput): InferenceError | null 
 
   flush() {
     this.slidingWindowBuffer.flush();

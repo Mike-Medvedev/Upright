@@ -17,7 +17,7 @@ export class BoxDiagonalHeuristic extends Heuristic<Prediction, ValidationData["
     return Math.hypot(prediction.width, prediction.height);
   }
 
-  override getCalibrationError(prediction: Prediction): InferenceError | null {
+  getCalibrationError(prediction: Prediction): InferenceError | null {
     if (!prediction.width || !prediction.height) {
       return new InferenceError("USER_OUT_OF_FRAME");
     }

@@ -1,4 +1,5 @@
 import type { ValidKeypoints } from "@/features/monitoring/monitoring.types";
+import { InferenceError } from "@/lib/errors";
 import { Heuristic } from "./heuristic";
 
 export class NoseShoulderHeightHeuristic extends Heuristic<ValidKeypoints, boolean> {
@@ -17,6 +18,14 @@ export class NoseShoulderHeightHeuristic extends Heuristic<ValidKeypoints, boole
     }
 
     return framePostureHeight / shoulderWidth;
+  }
+
+  getCalibrationError(input: ValidKeypoints): InferenceError | null {
+    if (this.calculate(input) === null) {
+      return new InferenceError("INVALID_POSTURE_CALIBRATION");
+    }
+
+    return null;
   }
 
   protected evaluateStatus(): boolean {
