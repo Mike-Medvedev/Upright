@@ -1,6 +1,6 @@
 /**
  * An abstract base class for managing a numeric data buffer with a running average.
- * This class acts as a **Low-Pass Filter**, smoothing out noisy data (like jittery
+ * This class acts as a Low-Pass Filter, smoothing out noisy data (like jittery
  * pose estimation keypoints) from video frames by maintaining a sliding window of values.
  *
  * @abstract
