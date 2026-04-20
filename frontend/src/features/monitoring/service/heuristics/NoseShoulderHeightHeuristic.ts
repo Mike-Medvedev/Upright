@@ -1,6 +1,6 @@
 import type { ValidKeypoints } from "@/features/monitoring/monitoring.types";
 import { InferenceError } from "@/lib/errors";
-import { Heuristic } from "./heuristic";
+import { Heuristic } from "@/features/monitoring/service/heuristics/core/heuristic";
 
 export class NoseShoulderHeightHeuristic extends Heuristic<ValidKeypoints, boolean> {
   private readonly POSTURE_TOLERANCE = 0.1;

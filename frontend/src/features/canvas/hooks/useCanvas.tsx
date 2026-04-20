@@ -1,11 +1,8 @@
 import { useCallback, useRef } from "react";
-import {
-  CanvasService,
-  type CanvasEdgeProps,
-  type CanvasTextProps,
-} from "@/features/monitoring/service/canvas.service";
+import type { CanvasEdgeProps, CanvasTextProps } from "@/features/canvas/canvas.types";
+import { CanvasService } from "@/features/canvas/service/canvas.service";
 
-export default function useCanvas() {
+export function useCanvas() {
   const canvasServiceRef = useRef<CanvasService | null>(null);
   const canvasNodeRef = useRef<HTMLCanvasElement | null>(null);
 

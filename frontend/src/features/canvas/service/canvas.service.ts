@@ -1,21 +1,4 @@
-export interface CanvasTextProps {
-  text: string;
-  point: Point;
-  color?: string | CanvasGradient;
-  font?: string;
-}
-
-export interface CanvasEdgeProps {
-  point1: Point;
-  point2: Point;
-  width?: number;
-  color?: string | CanvasGradient;
-}
-
-export interface Point {
-  x: number;
-  y: number;
-}
+import type { CanvasEdgeProps, CanvasTextProps, Point } from "@/features/canvas/canvas.types";
 
 export class CanvasService {
   private readonly ctx: CanvasRenderingContext2D;
@@ -31,6 +14,7 @@ export class CanvasService {
   reset() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
+
   drawText({ text, point, color = "red", font = "52px Inter" }: CanvasTextProps) {
     this.ctx.font = font;
     if (color) this.ctx.fillStyle = color;

@@ -1,17 +1,17 @@
 import { inferenceClient } from "@/infra/inference.client";
 import { useEffect, useState, useEffectEvent } from "react";
+import { useCanvas } from "@/features/canvas/hooks/useCanvas";
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import { useCalibrationCountdown } from "@/features/monitoring/hooks/useCalibrationCountdown";
 import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
-import useCanvas from "@/features/monitoring/hooks/useCanvas";
 import { useMonitoringAlerts } from "@/features/monitoring/hooks/useMonitoringAlerts";
 import { useMonitoringVideoCanvas } from "@/features/monitoring/hooks/useMonitoringVideoCanvas";
 import {
   getInferenceHeaderState,
   getLivePostureHeaderState,
-} from "@/features/monitoring/service/monitoring-messages.utils";
+} from "@/features/monitoring/utils/monitoring-messages.utils";
 import { monitoringService } from "@/features/monitoring/service/monitoring.service";
-import { deriveMonitoringSessionStatus } from "@/features/monitoring/service/monitoring-session.utils";
+import { deriveMonitoringSessionStatus } from "@/features/monitoring/utils/monitoring-session.utils";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
 import type { MonitoringSessionStatus, ValidationData } from "@/features/monitoring/monitoring.types";

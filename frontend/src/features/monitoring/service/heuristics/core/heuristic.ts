@@ -1,5 +1,8 @@
 import { InferenceError } from "@/lib/errors";
-import { CalibrationBuffer, SlidingWindowBuffer } from "./buffer";
+import {
+  CalibrationBuffer,
+  SlidingWindowBuffer,
+} from "@/features/monitoring/service/heuristics/core/buffer";
 
 export abstract class Heuristic<TInput, TOutput> {
   protected slidingWindowBuffer: SlidingWindowBuffer;

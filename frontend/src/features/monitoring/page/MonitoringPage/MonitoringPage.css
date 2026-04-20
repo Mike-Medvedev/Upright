@@ -84,43 +84,6 @@
   color: var(--mantine-color-white);
 }
 
-.monitoringVideoShell {
-  aspect-ratio: 16 / 10;
-  background:
-    radial-gradient(circle at top, rgba(164, 80, 255, 0.12), transparent 36%),
-    rgba(0, 0, 0, 0.45);
-  border-radius: 0;
-  flex: 1 1 0;
-  max-width: 100%;
-  min-height: 360px;
-  min-width: 0;
-  overflow: hidden;
-  position: relative;
-  transition:
-    box-shadow 0.2s ease,
-    outline-color 0.2s ease;
-  width: 100%;
-}
-
-/* Local + remote: fill the shell; crop edges if pipeline aspect differs slightly from the card. */
-.monitoringVideo {
-  display: block;
-  height: 100%;
-  inset: 0;
-  object-fit: cover;
-  object-position: center;
-  position: absolute;
-  width: 100%;
-}
-
-.monitoringCanvas {
-  height: 100%;
-  inset: 0;
-  pointer-events: none;
-  position: absolute;
-  width: 100%;
-}
-
 .monitoringVideoPlaceholder {
   align-items: center;
   background:
@@ -150,104 +113,6 @@
     0 0 42px rgba(164, 80, 255, 0.22);
 }
 
-.monitoringVideoOverlay {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  inset: 0;
-  justify-content: center;
-  padding: var(--mantine-spacing-lg);
-  position: absolute;
-  text-align: center;
-  width: 100%;
-}
-
-.monitoringVideoOverlay_connecting {
-  background: rgba(0, 0, 0, 0.6);
-}
-
-.monitoringVideoOverlay_dim {
-  backdrop-filter: blur(6px);
-  background: rgba(0, 0, 0, 0.55);
-}
-
-.monitoringVideoOverlay_calibrating {
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: var(--mantine-spacing-md);
-}
-
-.monitoringCalibrationOverlayRail {
-  backdrop-filter: blur(12px);
-  background:
-    linear-gradient(135deg, rgba(164, 80, 255, 0.2), rgba(122, 28, 255, 0.08)),
-    rgba(8, 8, 12, 0.82);
-  border: 1px solid rgba(164, 80, 255, 0.34);
-  border-radius: 20px;
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.42),
-    0 0 24px rgba(164, 80, 255, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  margin-left: auto;
-  max-width: 340px;
-  padding: 14px 16px;
-  text-align: left;
-  width: min(100%, 340px);
-}
-
-.monitoringCalibrationOverlayRail_countdown {
-  text-align: center;
-}
-
-.monitoringCalibrationOverlayHeader {
-  align-items: center;
-  display: flex;
-  gap: var(--mantine-spacing-sm);
-  justify-content: space-between;
-}
-
-.monitoringCalibrationOverlayLabel {
-  color: var(--mantine-color-white);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.monitoringCalibrationOverlayPercent {
-  color: rgba(215, 184, 255, 0.95);
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.monitoringCalibrationOverlayText {
-  color: rgba(235, 235, 245, 0.88);
-  line-height: 1.35;
-}
-
-.monitoringCalibrationOverlayHeadline {
-  color: var(--mantine-color-white);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-.monitoringCalibrationOverlayCountdown {
-  color: var(--mantine-color-white);
-  font-size: clamp(2.8rem, 6vw, 4.2rem);
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  line-height: 1;
-  text-shadow: 0 0 28px rgba(164, 80, 255, 0.32);
-}
-
-.monitoringVideoOverlay_paused {
-  backdrop-filter: blur(4px);
-  background: rgba(0, 0, 0, 0.5);
-}
-
 @media (max-width: 48em) {
   .monitoringPage {
     justify-content: flex-start;
@@ -260,16 +125,6 @@
   .monitoringPreviewTopTitle {
     font-size: 0.95rem;
     max-width: none;
-  }
-
-  .monitoringVideoShell {
-    min-height: clamp(240px, 52vh, 320px);
-  }
-
-  .monitoringCalibrationOverlayRail {
-    margin-inline: auto;
-    max-width: 280px;
-    width: min(100%, 280px);
   }
 }
 

@@ -1,4 +1,4 @@
-import type { Point } from "@/features/monitoring/service/canvas.service";
+import type { Point } from "@/features/canvas/canvas.types";
 
 export function getRenderedVideoSize(node: HTMLVideoElement) {
   return {

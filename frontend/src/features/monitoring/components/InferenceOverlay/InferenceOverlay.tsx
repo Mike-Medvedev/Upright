@@ -1,17 +1,20 @@
 import { Loader, Progress, Stack, Text } from "@mantine/core";
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
+import "./InferenceOverlay.css";
+
+interface InferenceOverlayProps {
+  calibrationCountdown: number | null;
+  calibrationProgress: number;
+  status: MonitoringSessionStatus;
+  errorMessage: string | null;
+}
 
 export default function InferenceOverlay({
   calibrationCountdown,
   calibrationProgress,
   status,
   errorMessage,
-}: {
-  calibrationCountdown: number | null;
-  calibrationProgress: number;
-  status: MonitoringSessionStatus;
-  errorMessage: string | null;
-}) {
+}: InferenceOverlayProps) {
   if (status === "connecting") {
     return (
       <div aria-live="polite" className="monitoringVideoOverlay monitoringVideoOverlay_connecting">

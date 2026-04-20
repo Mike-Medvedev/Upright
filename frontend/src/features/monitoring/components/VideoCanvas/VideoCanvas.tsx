@@ -1,3 +1,5 @@
+import "./VideoCanvas.css";
+
 interface VideoCanvasProps {
   videoRef: (node: HTMLVideoElement | null) => void;
   canvasRef: (node: HTMLCanvasElement | null) => void;

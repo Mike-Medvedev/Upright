@@ -1,6 +1,6 @@
 import { Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
-import { CameraPreview } from "@/features/monitoring/components/CameraPreview";
+import { CameraPreview } from "@/features/monitoring/components/CameraPreview/CameraPreview";
 import { useLiveVideoInference } from "@/features/monitoring/hooks/useLiveVideoInference";
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
@@ -8,7 +8,7 @@ import {
   getMonitoringErrorMessage,
   getMonitoringHeaderMessage,
   getMonitoringHeaderTone,
-} from "@/features/monitoring/service/monitoring-messages.utils";
+} from "@/features/monitoring/utils/monitoring-messages.utils";
 import "@/features/monitoring/page/MonitoringPage/MonitoringPage.css";
 
 export function MonitoringPage() {

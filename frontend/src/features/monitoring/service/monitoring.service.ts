@@ -1,14 +1,14 @@
 import type { ValidatedFrame, ValidationData } from "@/features/monitoring/monitoring.types";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
 import { InferenceError } from "@/lib/errors";
-import { BoxDiagonalHeuristic } from "@/features/monitoring/service/BoxDiagonalHeuristic";
-import { EarAsymmetryHeuristic } from "@/features/monitoring/service/EarAsymmetryHeuristic";
-import { NoseShoulderHeightHeuristic } from "@/features/monitoring/service/NoseShoulderHeightHeuristic";
+import { BoxDiagonalHeuristic } from "@/features/monitoring/service/heuristics/BoxDiagonalHeuristic";
+import { EarAsymmetryHeuristic } from "@/features/monitoring/service/heuristics/EarAsymmetryHeuristic";
+import { NoseShoulderHeightHeuristic } from "@/features/monitoring/service/heuristics/NoseShoulderHeightHeuristic";
 import {
   extractMonitoringKeypoints,
   parseMonitoringFrame,
   scaleMonitoringFrame,
-} from "@/features/monitoring/service/monitoring-frame.utils";
+} from "@/features/monitoring/utils/monitoring-frame.utils";
 
 export class MonitoringService {
   private noseShoulderHeightHeuristic: NoseShoulderHeightHeuristic;

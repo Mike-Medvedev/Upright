@@ -1,8 +1,8 @@
 import {
   getRenderedVideoSize,
   mapPointToCoverDisplaySpace,
-} from "@/features/monitoring/service/monitoring-display.utils";
-import type { Point } from "@/features/monitoring/service/canvas.service";
+} from "@/features/monitoring/utils/monitoring-display.utils";
+import type { Point } from "@/features/canvas/canvas.types";
 import { monitoringService } from "@/features/monitoring/service/monitoring.service";
 import { useCallback, useEffect, useRef } from "react";
 

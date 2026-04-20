@@ -1,6 +1,6 @@
 import type { Prediction, ValidationData } from "@/features/monitoring/monitoring.types";
 import { InferenceError } from "@/lib/errors";
-import { Heuristic } from "./heuristic";
+import { Heuristic } from "@/features/monitoring/service/heuristics/core/heuristic";
 
 export class BoxDiagonalHeuristic extends Heuristic<Prediction, ValidationData["frameDistanceStatus"]> {
   private readonly BOX_DIAGONAL_TOLERANCE = 0.15;

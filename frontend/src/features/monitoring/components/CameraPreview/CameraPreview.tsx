@@ -1,6 +1,7 @@
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
-import InferenceOverlay from "@/features/monitoring/components/InferenceOverlay";
-import VideoCanvas from "@/features/monitoring/components/VideoCanvas";
+import InferenceOverlay from "@/features/monitoring/components/InferenceOverlay/InferenceOverlay";
+import VideoCanvas from "@/features/monitoring/components/VideoCanvas/VideoCanvas";
+import "./CameraPreview.css";
 
 interface CameraPreviewProps {
   videoRef: (node: HTMLVideoElement | null) => void;

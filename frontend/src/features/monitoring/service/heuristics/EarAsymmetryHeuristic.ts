@@ -1,6 +1,6 @@
 import type { ValidKeypoints } from "@/features/monitoring/monitoring.types";
 import { InferenceError } from "@/lib/errors";
-import { Heuristic } from "./heuristic";
+import { Heuristic } from "@/features/monitoring/service/heuristics/core/heuristic";
 
 export class EarAsymmetryHeuristic extends Heuristic<ValidKeypoints, boolean> {
   private readonly EAR_ASYMMETRY_TOLERANCE = 0.08;

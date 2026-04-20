@@ -1,0 +1,23 @@
+.monitoringVideoShell {
+  aspect-ratio: 16 / 10;
+  background:
+    radial-gradient(circle at top, rgba(164, 80, 255, 0.12), transparent 36%),
+    rgba(0, 0, 0, 0.45);
+  border-radius: 0;
+  flex: 1 1 0;
+  max-width: 100%;
+  min-height: 360px;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  transition:
+    box-shadow 0.2s ease,
+    outline-color 0.2s ease;
+  width: 100%;
+}
+
+@media (max-width: 48em) {
+  .monitoringVideoShell {
+    min-height: clamp(240px, 52vh, 320px);
+  }
+}
