@@ -4,7 +4,11 @@ import { CameraPreview } from "@/features/monitoring/components/CameraPreview";
 import { useLiveVideoInference } from "@/features/monitoring/hooks/useLiveVideoInference";
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
 import type { MonitoringSessionStatus } from "@/features/monitoring/monitoring.types";
-import { InferenceConnectionError, LocalCameraError } from "@/lib/errors";
+import {
+  getMonitoringErrorMessage,
+  getMonitoringHeaderMessage,
+  getMonitoringHeaderTone,
+} from "@/features/monitoring/service/monitoring-messages.utils";
 import "@/features/monitoring/page/MonitoringPage/MonitoringPage.css";
 
 export function MonitoringPage() {
@@ -47,12 +51,12 @@ export function MonitoringPage() {
     isCameraActive && (currentStatus === "live" || currentStatus === "needs_calibration");
   const headerMessage =
     isCameraActive && currentStatus !== "connecting"
-      ? inferenceHeaderMessage ?? getHeaderMessage(currentStatus, currentErrorMessage)
-      : getHeaderMessage(currentStatus, currentErrorMessage);
+      ? inferenceHeaderMessage ?? getMonitoringHeaderMessage(currentStatus, currentErrorMessage)
+      : getMonitoringHeaderMessage(currentStatus, currentErrorMessage);
   const headerMessageTone =
     isCameraActive && currentStatus !== "connecting" && inferenceHeaderMessage
       ? inferenceHeaderMessageTone
-      : getHeaderMessageTone(currentStatus);
+      : getMonitoringHeaderTone(currentStatus);
 
   return (
     <Stack className="monitoringPage" gap="md">
@@ -113,53 +117,6 @@ export function MonitoringPage() {
       </Paper>
     </Stack>
   );
-}
-
-function getHeaderMessage(
-  status: MonitoringSessionStatus,
-  errorMessage: string | null,
-) {
-  switch (status) {
-    case "idle":
-      return "Click Start Recording to monitor your posture while you work.";
-    case "connecting":
-      return "Connecting to Live Inference API and starting posture monitoring.";
-    case "needs_calibration":
-      return "Calibration required. Click Calibrate to continue.";
-    case "calibration_countdown":
-      return "Sit upright in a comfortable position. Calibration is about to begin.";
-    case "live":
-      return "Posture monitoring is live while you work.";
-    case "calibrating":
-      return "Please sit upright in a comfortable position during calibration.";
-    case "error":
-      return errorMessage ?? "The camera could not be started. Check permissions and try again.";
-  }
-}
-
-function getMonitoringErrorMessage(error: Error | null) {
-  if (!error) {
-    return null;
-  }
-
-  if (error instanceof LocalCameraError) {
-    return "The camera could not be started. Check camera permissions and try again.";
-  }
-
-  if (error instanceof InferenceConnectionError) {
-    return "The inference API is unavailable. Check your connection and try again.";
-  }
-
-  return "We could not start posture monitoring. Please try again.";
-}
-
-function getHeaderMessageTone(status: MonitoringSessionStatus) {
-  switch (status) {
-    case "error":
-      return "warning";
-    default:
-      return "default";
-  }
 }
 
 function getPreviewCardClassName(
