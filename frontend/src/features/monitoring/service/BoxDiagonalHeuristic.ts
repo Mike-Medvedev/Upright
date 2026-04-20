@@ -9,7 +9,7 @@ export class BoxDiagonalHeuristic extends Heuristic<Prediction, ValidationData["
     super(30, 150);
   }
 
-  calculate(prediction: Prediction): number | null {
+  protected calculate(prediction: Prediction): number | null {
     if (!prediction.width || !prediction.height) {
       return null;
     }
@@ -17,7 +17,7 @@ export class BoxDiagonalHeuristic extends Heuristic<Prediction, ValidationData["
     return Math.hypot(prediction.width, prediction.height);
   }
 
-  getCalibrationError(prediction: Prediction): InferenceError | null {
+  protected getCalibrationError(prediction: Prediction): InferenceError | null {
     if (!prediction.width || !prediction.height) {
       return new InferenceError("USER_OUT_OF_FRAME");
     }

@@ -9,7 +9,7 @@ export class NoseShoulderHeightHeuristic extends Heuristic<ValidKeypoints, boole
     super(30, 150);
   }
 
-  calculate({ nose, lShoulder, rShoulder }: ValidKeypoints): number | null {
+  protected calculate({ nose, lShoulder, rShoulder }: ValidKeypoints): number | null {
     const framePostureHeight = (lShoulder.y + rShoulder.y) / 2 - nose.y;
     const shoulderWidth = Math.hypot(rShoulder.x - lShoulder.x, rShoulder.y - lShoulder.y);
 
@@ -20,7 +20,7 @@ export class NoseShoulderHeightHeuristic extends Heuristic<ValidKeypoints, boole
     return framePostureHeight / shoulderWidth;
   }
 
-  getCalibrationError(input: ValidKeypoints): InferenceError | null {
+  protected getCalibrationError(input: ValidKeypoints): InferenceError | null {
     if (this.calculate(input) === null) {
       return new InferenceError("INVALID_POSTURE_CALIBRATION");
     }

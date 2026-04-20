@@ -11,21 +11,40 @@ export abstract class Heuristic<TInput, TOutput> {
     this.calibrationBuffer = new CalibrationBuffer(calibrationSize);
   }
 
-  abstract calculate(input: TInput): number | null;
+  calibrate(input: TInput): {
+    error: InferenceError | null;
+    progress: number;
+    isComplete: boolean;
+  } {
+    const error = this.getCalibrationError(input);
+    if (error) {
+      return {
+        error,
+        progress: this.progress,
+        isComplete: this.isCalibrationComplete,
+      };
+    }
 
-  update(input: TInput, isCalibrating: boolean): TOutput {
     const value = this.calculate(input);
-    if (value === null) return this.getDefaultStatus();
-
-    if (isCalibrating) {
+    if (value !== null) {
       this.calibrationBuffer.push(value);
       if (this.calibrationBuffer.isFull) {
         this.calibratedValue = this.calibrationBuffer.average;
       }
-    } else {
-      this.slidingWindowBuffer.push(value);
     }
 
+    return {
+      error: null,
+      progress: this.progress,
+      isComplete: this.isCalibrationComplete,
+    };
+  }
+
+  evaluate(input: TInput): TOutput {
+    const value = this.calculate(input);
+    if (value === null) return this.getDefaultStatus();
+
+    this.slidingWindowBuffer.push(value);
     return this.evaluateStatus();
   }
 
@@ -37,7 +56,8 @@ export abstract class Heuristic<TInput, TOutput> {
     return this.calibrationBuffer.isFull;
   }
 
-  abstract getCalibrationError(_input: TInput): InferenceError | null 
+  protected abstract calculate(input: TInput): number | null;
+  protected abstract getCalibrationError(input: TInput): InferenceError | null;
 
   flush() {
     this.slidingWindowBuffer.flush();
