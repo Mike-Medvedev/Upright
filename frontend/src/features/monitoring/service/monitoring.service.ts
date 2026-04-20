@@ -46,9 +46,9 @@ export class MonitoringService {
 
   /**
    * The primary processing loop for the monitoring session.
-   * * - **In Calibration Mode**: Feeds data to heuristics to build an average baseline.
+   * - **In Calibration Mode**: Feeds data to heuristics to build an average baseline.
    * - **In Live Mode**: Evaluates current frame data against the calibrated baselines.
-   * * @param frame The validated frame data to process.
+   * @param frame The validated frame data to process.
    * @returns
    * - `data`: Validated posture and distance metrics (if in Live mode).
    * - `error`: Any processing or inference errors encountered.
