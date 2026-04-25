@@ -28,17 +28,23 @@ import type {
  * 4. **UI Updates: Exposes State for Inference errors, messages, posture status that is consumed in Monitoring Page
  */
 export function useLiveVideoInference(isActive: boolean) {
+  //TODO: break up state into actions
   const { alertPreferences } = useMonitoring();
   const { cameraStream, isLoading: isCameraLoading, error: cameraError } = useLocalCamera(isActive);
   const { canvasRef, drawEdge, reset, resize } = useCanvas();
   const [isLoading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+
+  //calibration state
   const [calibrationProgress, setProgress] = useState<number>(0);
   const [calibrationCountdown, setCalibrationCountdown] = useState<number | null>(null);
   const [isCalibrating, setCalibrating] = useState<boolean>(false);
-  const [isHealthyPosture, setHealthyPosture] = useState<boolean | null>(null);
   const [requiresCalibration, setRequiresCalibration] = useState<boolean>(false);
   const [hasCalibratedThisSession, setHasCalibratedThisSession] = useState<boolean>(false);
+
+  const [isHealthyPosture, setHealthyPosture] = useState<boolean | null>(null);
+
+  //messaging state
   const [headerMessage, setHeaderMessage] = useState<string | null>(null);
   const [headerMessageTone, setHeaderMessageTone] = useState<"default" | "success" | "warning">(
     "default",
