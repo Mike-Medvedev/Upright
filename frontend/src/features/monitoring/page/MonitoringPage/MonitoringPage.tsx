@@ -21,7 +21,7 @@ export function MonitoringPage() {
     headerMessage: inferenceHeaderMessage,
     headerMessageTone: inferenceHeaderMessageTone,
     isHealthyPosture,
-    startCalibration,
+    initCalibration,
     status,
     videoRef,
   } = useLiveVideoInference(state.isCameraActive);
@@ -44,14 +44,16 @@ export function MonitoringPage() {
 
   const isCameraActive = state.isCameraActive;
   const currentStatus = isCameraActive ? status : state.status;
-  const currentErrorMessage = isCameraActive ? getMonitoringErrorMessage(error) : state.errorMessage;
+  const currentErrorMessage = isCameraActive
+    ? getMonitoringErrorMessage(error)
+    : state.errorMessage;
   const isCalibrating = currentStatus === "calibrating";
   const isCalibrationCountdown = currentStatus === "calibration_countdown";
   const canCalibrate =
     isCameraActive && (currentStatus === "live" || currentStatus === "needs_calibration");
   const headerMessage =
     isCameraActive && currentStatus !== "connecting"
-      ? inferenceHeaderMessage ?? getMonitoringHeaderMessage(currentStatus, currentErrorMessage)
+      ? (inferenceHeaderMessage ?? getMonitoringHeaderMessage(currentStatus, currentErrorMessage))
       : getMonitoringHeaderMessage(currentStatus, currentErrorMessage);
   const headerMessageTone =
     isCameraActive && currentStatus !== "connecting" && inferenceHeaderMessage
@@ -63,13 +65,11 @@ export function MonitoringPage() {
       <Paper
         className={getPreviewCardClassName(isCameraActive, currentStatus, isHealthyPosture)}
         p={0}
-        radius="lg"
-      >
+        radius="lg">
         <div className={`monitoringPreviewTopBar monitoringPreviewTopBar_${headerMessageTone}`}>
           <Text
             aria-live="polite"
-            className={`monitoringPreviewTopTitle monitoringPreviewTopTitle_${headerMessageTone}`}
-          >
+            className={`monitoringPreviewTopTitle monitoringPreviewTopTitle_${headerMessageTone}`}>
             {headerMessage}
           </Text>
         </div>
@@ -90,12 +90,15 @@ export function MonitoringPage() {
                   Stop Recording
                 </Button>
                 <Button
-                  className={currentStatus === "needs_calibration" ? "monitoringCalibrateButton_prompt" : undefined}
+                  className={
+                    currentStatus === "needs_calibration"
+                      ? "monitoringCalibrateButton_prompt"
+                      : undefined
+                  }
                   disabled={!canCalibrate || isCalibrationCountdown}
                   loading={isCalibrating || isCalibrationCountdown}
-                  onClick={startCalibration}
-                  variant="default"
-                >
+                  onClick={initCalibration}
+                  variant="default">
                   {isCalibrationCountdown
                     ? `Starting in ${calibrationCountdown ?? 3}`
                     : isCalibrating

@@ -5,10 +5,7 @@ import { useMonitoring } from "@/features/monitoring/context/monitoring.context"
 import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
 import { useMonitoringAlerts } from "@/features/monitoring/hooks/useMonitoringAlerts";
 import { useMonitoringVideoCanvas } from "@/features/monitoring/hooks/useMonitoringVideoCanvas";
-import {
-  getInferenceHeaderState,
-  getLivePostureHeaderState,
-} from "@/features/monitoring/utils/monitoring-messages.utils";
+
 import { monitoringService } from "@/features/monitoring/service/monitoring.service";
 import { deriveMonitoringSessionStatus } from "@/features/monitoring/utils/monitoring-session.utils";
 import type { WebRTCOutputData } from "@roboflow/inference-sdk";
@@ -18,6 +15,7 @@ import type {
   ValidationData,
 } from "@/features/monitoring/monitoring.types";
 import useCalibration from "./useCalibration";
+import useMonitoringMessage from "./useMonitoringMessage";
 
 /**
  * The primary orchestrator hook for live AI posture monitoring. The Glue between React and the Processing engine
@@ -48,31 +46,19 @@ export function useLiveVideoInference(isActive: boolean) {
   const [isHealthyPosture, setHealthyPosture] = useState<boolean | null>(null);
 
   //messaging state
-  const [headerMessage, setHeaderMessage] = useState<string | null>(null);
-  const [headerMessageTone, setHeaderMessageTone] = useState<"default" | "success" | "warning">(
-    "default",
-  );
+  const {
+    headerMessage,
+    headerMessageTone,
+    resetHeaderMessage,
+    setHeaderMessage,
+    setHeaderMessageError,
+  } = useMonitoringMessage();
+
   const { mapPointToDisplaySpace, videoRef } = useMonitoringVideoCanvas(
     isActive,
     cameraStream,
     resize,
   );
-
-  const clearHeaderState = () => {
-    setHeaderMessage(null);
-    setHeaderMessageTone("default");
-  };
-
-  const applyInferenceHeaderState = (error: InferenceError) => {
-    const nextHeaderState = getInferenceHeaderState(error);
-
-    if (!nextHeaderState) {
-      return;
-    }
-
-    setHeaderMessage(nextHeaderState.message);
-    setHeaderMessageTone(nextHeaderState.tone);
-  };
 
   const handlePostureProcessingError = (postureError: InferenceError) => {
     if (monitoringService.isCalibrating) {
@@ -80,13 +66,13 @@ export function useLiveVideoInference(isActive: boolean) {
     }
 
     setHealthyPosture(null);
-    applyInferenceHeaderState(postureError);
+    setHeaderMessageError(postureError);
   };
 
   const handleCalibrationFrame = (progress: number, isComplete: boolean) => {
     resetCanvas();
     setHealthyPosture(null);
-    clearHeaderState();
+    resetHeaderMessage();
 
     if (isComplete) {
       //complete calibration
@@ -100,7 +86,7 @@ export function useLiveVideoInference(isActive: boolean) {
   const handlePreCalibrationFrame = () => {
     setRequiresCalibration(true); // set required calibration might not be part of calibration
     setHealthyPosture(null);
-    clearHeaderState();
+    resetHeaderMessage();
     resetCanvas();
   };
 
@@ -108,14 +94,10 @@ export function useLiveVideoInference(isActive: boolean) {
     const { lShoulder, rShoulder } = postureData.keypoints;
     const displayLeftShoulder = mapPointToDisplaySpace({ x: lShoulder.x, y: lShoulder.y });
     const displayRightShoulder = mapPointToDisplaySpace({ x: rShoulder.x, y: rShoulder.y });
-    const nextHeaderState = getLivePostureHeaderState(
-      postureData.frameDistanceStatus,
-      postureData.isHealthyPosture,
-    );
+
+    setHeaderMessage(postureData);
 
     setHealthyPosture(postureData.isHealthyPosture);
-    setHeaderMessage(nextHeaderState.message);
-    setHeaderMessageTone(nextHeaderState.tone);
     resetCanvas();
     drawEdge({
       color: postureData.isHealthyPosture ? "rgba(64, 192, 87, 0.95)" : "rgba(250, 82, 82, 0.95)",
@@ -139,7 +121,7 @@ export function useLiveVideoInference(isActive: boolean) {
     const { validatedFrame, error } = monitoringService.parseFrame(data);
     if (error instanceof InferenceError) {
       setHealthyPosture(null);
-      applyInferenceHeaderState(error);
+      setHeaderMessageError(error);
       if (error.code === "MISSING_PREDICTION_IMAGE_DIMENSIONS") {
         console.warn("MISSING_PREDICTION_IMAGE_DIMENSIONS");
         return;
@@ -192,12 +174,11 @@ export function useLiveVideoInference(isActive: boolean) {
       stopCalibration();
       setHealthyPosture(null);
       setRequiresCalibration(false);
-      setHeaderMessage(null);
-      setHeaderMessageTone("default");
+      resetHeaderMessage();
       monitoringService.resetSession();
       resetCanvas();
     };
-  }, [cameraStream, isActive, reset, dispatch]);
+  }, [cameraStream, isActive, resetCanvas, stopCalibration, resetHeaderMessage]);
 
   const combinedError = cameraError ?? error;
   const status: MonitoringSessionStatus = deriveMonitoringSessionStatus(
@@ -215,10 +196,12 @@ export function useLiveVideoInference(isActive: boolean) {
   const initCalibration = () => {
     startCalibration();
     setRequiresCalibration(false);
-    clearHeaderState();
+    resetHeaderMessage();
   };
 
   return {
+    calibrationCountdown: state.calibrationCountdown,
+    calibrationProgress: state.calibrationProgress,
     videoRef,
     canvasRef,
     error: combinedError,
