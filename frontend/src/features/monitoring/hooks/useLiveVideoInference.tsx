@@ -18,7 +18,7 @@ import type {
   MonitoringSessionStatus,
   ValidationData,
 } from "@/features/monitoring/monitoring.types";
-import useCalibrationReducer from "./useCalibration";
+import useCalibration from "./useCalibration";
 
 /**
  * The primary orchestrator hook for live AI posture monitoring. The Glue between React and the Processing engine
@@ -32,12 +32,18 @@ export function useLiveVideoInference(isActive: boolean) {
   //TODO: break up state into actions
   const { alertPreferences } = useMonitoring();
   const { cameraStream, isLoading: isCameraLoading, error: cameraError } = useLocalCamera(isActive);
-  const { canvasRef, drawEdge, reset, resize } = useCanvas();
+  const { canvasRef, drawEdge, resetCanvas, resize } = useCanvas();
   const [isLoading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   //calibration state
-  const [state, dispatch] = useCalibrationReducer();
+  const {
+    state,
+    startCalibration,
+    stopCalibration,
+    completeCalibration,
+    updateCalibrationProgress,
+  } = useCalibration();
   const [requiresCalibration, setRequiresCalibration] = useState<boolean>(false);
 
   const [isHealthyPosture, setHealthyPosture] = useState<boolean | null>(null);
@@ -71,8 +77,7 @@ export function useLiveVideoInference(isActive: boolean) {
 
   const handlePostureProcessingError = (postureError: InferenceError) => {
     if (monitoringService.isCalibrating) {
-      dispatch({ type: "CALIBRATION_PROGRESS_UPDATE", progress: monitoringService.progress });
-      // setProgress(monitoringService.progress); //set calibration progress
+      updateCalibrationProgress(monitoringService.progress);
     }
 
     setHealthyPosture(null);
@@ -80,24 +85,24 @@ export function useLiveVideoInference(isActive: boolean) {
   };
 
   const handleCalibrationFrame = (progress: number, isComplete: boolean) => {
-    reset();
+    resetCanvas();
     setHealthyPosture(null);
     clearHeaderState();
 
     if (isComplete) {
       //complete calibration
-      dispatch({ type: "COMPLETE_CALIBRATION" });
+      completeCalibration();
       setRequiresCalibration(false);
       return;
     }
-    dispatch({ type: "CALIBRATION_PROGRESS_UPDATE", progress });
+    updateCalibrationProgress(progress);
   };
 
   const handlePreCalibrationFrame = () => {
     setRequiresCalibration(true); // set required calibration might not be part of calibration
     setHealthyPosture(null);
     clearHeaderState();
-    reset();
+    resetCanvas();
   };
 
   const handleLivePostureFrame = (postureData: ValidationData) => {
@@ -112,7 +117,7 @@ export function useLiveVideoInference(isActive: boolean) {
     setHealthyPosture(postureData.isHealthyPosture);
     setHeaderMessage(nextHeaderState.message);
     setHeaderMessageTone(nextHeaderState.tone);
-    reset();
+    resetCanvas();
     drawEdge({
       color: postureData.isHealthyPosture ? "rgba(64, 192, 87, 0.95)" : "rgba(250, 82, 82, 0.95)",
       point1: displayLeftShoulder,
@@ -128,7 +133,7 @@ export function useLiveVideoInference(isActive: boolean) {
 
     if (state.calibrationCountdown !== null) {
       setHealthyPosture(null);
-      reset();
+      resetCanvas();
       return;
     }
 
@@ -166,7 +171,12 @@ export function useLiveVideoInference(isActive: boolean) {
     handleLivePostureFrame(postureData);
   });
 
-  useCalibrationCountdown();
+  useCalibrationCountdown(
+    calibrationCountdown,
+    setCalibrationCountdown,
+    setProgress,
+    setCalibrating,
+  );
 
   useEffect(() => {
     if (!isActive || !cameraStream) {
@@ -187,13 +197,13 @@ export function useLiveVideoInference(isActive: boolean) {
       inferenceClient.stop();
       setLoading(true);
       setError(null);
-      dispatch({ type: "RESET_CALIBRATION" });
+      stopCalibration();
       setHealthyPosture(null);
       setRequiresCalibration(false);
       setHeaderMessage(null);
       setHeaderMessageTone("default");
       monitoringService.resetSession();
-      reset();
+      resetCanvas();
     };
   }, [cameraStream, isActive, reset, dispatch]);
 
@@ -210,8 +220,8 @@ export function useLiveVideoInference(isActive: boolean) {
 
   useMonitoringAlerts(isActive, status, isHealthyPosture, alertPreferences);
 
-  const startCalibration = () => {
-    dispatch({ type: "START_CALIBRATION" });
+  const initCalibration = () => {
+    startCalibration();
     setRequiresCalibration(false);
     clearHeaderState();
   };
@@ -223,7 +233,7 @@ export function useLiveVideoInference(isActive: boolean) {
     headerMessage,
     headerMessageTone,
     isHealthyPosture,
-    startCalibration,
+    initCalibration,
     status,
   };
 }

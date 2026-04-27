@@ -38,7 +38,7 @@ export function useCanvas() {
     canvasServiceRef.current?.drawEdge(props);
   }, []);
 
-  const reset = useCallback(() => {
+  const resetCanvas = useCallback(() => {
     canvasServiceRef.current?.reset();
   }, []);
 
@@ -46,7 +46,7 @@ export function useCanvas() {
     canvasRef,
     drawText,
     drawEdge,
-    reset,
+    resetCanvas,
     resize,
     getCanvasDimensions,
   };
