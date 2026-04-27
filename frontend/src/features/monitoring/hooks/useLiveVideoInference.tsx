@@ -2,7 +2,6 @@ import { inferenceClient } from "@/infra/inference.client";
 import { useEffect, useState, useEffectEvent } from "react";
 import { useCanvas } from "@/features/canvas/hooks/useCanvas";
 import { useMonitoring } from "@/features/monitoring/context/monitoring.context";
-import { useCalibrationCountdown } from "@/features/monitoring/hooks/useCalibrationCountdown";
 import useLocalCamera from "@/features/monitoring/hooks/useLocalCamera";
 import { useMonitoringAlerts } from "@/features/monitoring/hooks/useMonitoringAlerts";
 import { useMonitoringVideoCanvas } from "@/features/monitoring/hooks/useMonitoringVideoCanvas";
@@ -170,13 +169,6 @@ export function useLiveVideoInference(isActive: boolean) {
     }
     handleLivePostureFrame(postureData);
   });
-
-  useCalibrationCountdown(
-    calibrationCountdown,
-    setCalibrationCountdown,
-    setProgress,
-    setCalibrating,
-  );
 
   useEffect(() => {
     if (!isActive || !cameraStream) {
