@@ -15,6 +15,3 @@ export class IntervalTimer {
     this.id = null;
   }
 }
-
-const timer = new IntervalTimer();
-timer.start(() => console.log("Time!"), 1000);

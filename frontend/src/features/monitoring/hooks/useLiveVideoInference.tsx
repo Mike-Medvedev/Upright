@@ -27,10 +27,20 @@ import useMonitoringMessage from "./useMonitoringMessage";
  */
 export function useLiveVideoInference(isActive: boolean) {
   //TODO: break up state into actions
+
+  // Notifications
   const { alertPreferences } = useMonitoring();
+
+  // Camera Stream
   const { cameraStream, isLoading: isCameraLoading, error: cameraError } = useLocalCamera(isActive);
+
+  // Canvas
   const { canvasRef, drawEdge, resetCanvas, resize } = useCanvas();
+
+  // Loading set by inference firing
   const [isLoading, setLoading] = useState<boolean>(true);
+
+  // Error set by inferencing webrtc conn failing
   const [error, setError] = useState<Error | null>(null);
 
   //calibration state
@@ -41,8 +51,11 @@ export function useLiveVideoInference(isActive: boolean) {
     completeCalibration,
     updateCalibrationProgress,
   } = useCalibration();
+
+  // does Inference video require calibration
   const [requiresCalibration, setRequiresCalibration] = useState<boolean>(false);
 
+  // Is the posture Healthy? Final output of pipeline
   const [isHealthyPosture, setHealthyPosture] = useState<boolean | null>(null);
 
   //messaging state
@@ -54,12 +67,14 @@ export function useLiveVideoInference(isActive: boolean) {
     setHeaderMessageError,
   } = useMonitoringMessage();
 
+  // manages Video Element and syncs to canvas
   const { mapPointToDisplaySpace, videoRef } = useMonitoringVideoCanvas(
     isActive,
     cameraStream,
     resize,
   );
 
+  // handles error and updates UI from Frame processing
   const handlePostureProcessingError = (postureError: InferenceError) => {
     if (monitoringService.isCalibrating) {
       updateCalibrationProgress(monitoringService.progress);
@@ -69,6 +84,7 @@ export function useLiveVideoInference(isActive: boolean) {
     setHeaderMessageError(postureError);
   };
 
+  //Updates UI from Frame Processing
   const handleCalibrationFrame = (progress: number, isComplete: boolean) => {
     resetCanvas();
     setHealthyPosture(null);
@@ -83,6 +99,7 @@ export function useLiveVideoInference(isActive: boolean) {
     updateCalibrationProgress(progress);
   };
 
+  // Updates UIO from Frame processing
   const handlePreCalibrationFrame = () => {
     setRequiresCalibration(true); // set required calibration might not be part of calibration
     setHealthyPosture(null);
@@ -90,6 +107,7 @@ export function useLiveVideoInference(isActive: boolean) {
     resetCanvas();
   };
 
+  // update UI from Frame Processing
   const handleLivePostureFrame = (postureData: ValidationData) => {
     const { lShoulder, rShoulder } = postureData.keypoints;
     const displayLeftShoulder = mapPointToDisplaySpace({ x: lShoulder.x, y: lShoulder.y });
@@ -107,17 +125,21 @@ export function useLiveVideoInference(isActive: boolean) {
     });
   };
 
+  // Main Frame processing handler for inference client
   const onData = useEffectEvent((data: WebRTCOutputData): void => {
+    // setUI based on this handler
     if (isLoading) {
       setLoading(false);
     }
 
+    // set UI state and reset canvas based on calibratin countdown THIS DOESNT NEED TO BE HERE
     if (state.calibrationCountdown !== null) {
       setHealthyPosture(null);
       resetCanvas();
       return;
     }
 
+    // parse frame, should be here part of pipeline
     const { validatedFrame, error } = monitoringService.parseFrame(data);
     if (error instanceof InferenceError) {
       setHealthyPosture(null);
@@ -129,6 +151,7 @@ export function useLiveVideoInference(isActive: boolean) {
     }
     if (!validatedFrame?.output.predictions.length) return;
 
+    // process frame should be here part of pipeline
     const {
       data: postureData,
       error: postureError,
@@ -152,6 +175,7 @@ export function useLiveVideoInference(isActive: boolean) {
     handleLivePostureFrame(postureData);
   });
 
+  // on Comopnent mount starts the inference client? But honestly this should be starting on an event on a button click not on mount
   useEffect(() => {
     if (!isActive || !cameraStream) {
       return;
